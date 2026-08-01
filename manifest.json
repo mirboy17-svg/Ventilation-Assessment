@@ -1,0 +1,21 @@
+{
+  "name": "밀폐공간 환기계산 웹앱",
+  "short_name": "환기계산기",
+  "description": "안전보건공단 KOSHA GUIDE 기준 밀폐공간 환기량 산출",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#F4F7FB",
+  "theme_color": "#317EFB",
+  "icons": [
+    {
+      "src": "/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
