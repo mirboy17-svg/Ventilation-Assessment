@@ -28,8 +28,43 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="환기계산앱">
-  <link rel="apple-touch-icon" href="image_bf5585.jpg">
-  <link rel="manifest" href='data:application/manifest+json;charset=utf-8,%7B%22name%22%3A%22%EB%B0%80%ED%8F%90%EA%B3%B5%EA%B0%84%20%ED%99%98%EA%B8%B0%20%EC%9C%84%ED%97%98%EC%84%B1%ED%8F%89%EA%B0%80%22%2C%22short_name%22%3A%22%ED%99%98%EA%B8%B0%EA%B3%84%EC%82%B0%EC%95%B1%22%2C%22display%22%3A%22standalone%22%2C%22start_url%22%3A%22.%22%2C%22background_color%22%3A%22%23F4F7FB%22%2C%22theme_color%22%3A%22%232563EB%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22image_bf5585.jpg%22%2C%22sizes%22%3A%22192x192%22%2C%22type%22%3A%22image%2Fjpeg%22%7D%2C%7B%22src%22%3A%22image_bf5585.jpg%22%2C%22sizes%22%3A%22512x512%22%2C%22type%22%3A%22image%2Fjpeg%22%7D%5D%7D'>
+  
+  <!-- iOS 바탕화면 아이콘 (스크립트에서 자동 변경됨) -->
+  <link rel="apple-touch-icon" id="apple-icon" href="image_bf5585.jpg">
+  
+  <!-- Android 바탕화면 아이콘 및 앱 설정 (스크립트에서 동적 생성) -->
+  <link rel="manifest" id="manifest-link" href="">
+  
+  <script>
+    // ==========================================
+    // 🛠️ 바탕화면 앱 아이콘 변경하는 곳 🛠️
+    // 아래 따옴표 안의 파일명을 준비하신 이미지 파일명으로 변경하세요.
+    // (예시: "app_icon.png")
+    var iconFileName = "icon-192x192.jpg"; 
+    // ==========================================
+
+    document.addEventListener("DOMContentLoaded", function() {
+      // iOS 아이콘 적용
+      document.getElementById('apple-icon').setAttribute('href', iconFileName);
+
+      // PWA Manifest 동적 생성 (안드로이드 아이콘 및 앱 이름 설정)
+      var manifestJSON = {
+        "name": "밀폐공간 환기 위험성평가",
+        "short_name": "환기계산앱",
+        "display": "standalone",
+        "start_url": ".",
+        "background_color": "#F4F7FB",
+        "theme_color": "#2563EB",
+        "icons": [
+          { "src": iconFileName, "sizes": "192x192", "type": "image/png" },
+          { "src": iconFileName, "sizes": "512x512", "type": "image/png" }
+        ]
+      };
+      
+      var blob = new Blob([JSON.stringify(manifestJSON)], {type: 'application/manifest+json'});
+      document.getElementById('manifest-link').setAttribute('href', URL.createObjectURL(blob));
+    });
+  </script>
   
   <!-- 가상 Service Worker 등록 (안드로이드 시스템 설치 팝업 유도용) -->
   <script>
