@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>밀폐공간 환기 위험성평가</title>
+  <title>맨홀공간 환기 위험성평가</title>
   
   <!-- 카카오톡 인앱 브라우저 감지 및 외부 브라우저(크롬/사파리) 강제 호출 스크립트 -->
   <script>
@@ -15,12 +15,12 @@
 
   <!-- PWA 아이콘 변수 설정 (이미지 파일명 변경 시 여기만 수정하세요) -->
   <script>
-    // png 대신 벡터 파일인 jpg로 변경 적용
-    var iconFileName = "image_bf5001.jpg"; 
+    // png 대신 벡터 파일인 svg로 변경 적용
+    var iconFileName = "image_bf5001.svg"; 
     
     // 안정적인 Data URI 방식으로 Manifest 생성 (모바일 브라우저 차단 방지)
     var manifestData = {
-      "name": "밀폐공간 환기계산",
+      "name": "맨홀공간 환기계산",
       "short_name": "환기계산",
       "start_url": "./",
       "display": "standalone",
@@ -317,43 +317,19 @@
                   ></div>
                 </div>
                 <span className="ml-3 text-xs font-bold text-slate-400 whitespace-nowrap">{step - 1} / 6</span>
-                
-                {/* 상단 앱 설치(다운로드 화살표) 버튼 추가 */}
-                <button 
-                  onClick={handleInstallClick} 
-                  className="ml-3 p-1.5 bg-blue-50 text-blue-600 rounded-full shadow-sm hover:bg-blue-100 active:scale-95 transition-all flex-shrink-0"
-                  title="앱 다운로드 및 설치"
-                >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                  </svg>
-                </button>
               </header>
             )}
 
             { }
             {step === 1 && (
               <div className="flex flex-col flex-1 pb-6 pt-10 animate-in fade-in duration-700 ease-out h-full max-h-[100dvh] relative">
-                
-                {/* 첫 화면 우측 상단 앱 설치(화살표) 버튼 추가 */}
-                <div className="absolute top-4 right-4 z-20">
-                  <button 
-                    onClick={handleInstallClick} 
-                    className="flex items-center gap-1.5 py-2 px-3 bg-white/90 backdrop-blur border border-slate-200/80 rounded-full shadow-sm text-blue-600 hover:bg-blue-50 active:scale-95 transition-all"
-                  >
-                    <svg className="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                    </svg>
-                    <span className="text-xs font-bold">앱 설치</span>
-                  </button>
-                </div>
 
                 <div className="text-center w-full space-y-3 px-6 mb-6 shrink-0 mt-4">
                   <span className="inline-block py-1.5 px-4 rounded-full bg-blue-50 text-blue-600 text-xs font-bold tracking-wide mb-1">
                     안전보건공단 KOSHA GUIDE 기준
                   </span>
                   <h1 className="text-[2.2rem] font-extrabold text-slate-900 tracking-tight leading-tight">
-                    밀폐공간 환기 <br/>
+                    맨홀공간 환기 <br/>
                     <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-500">
                       위험성평가
                     </span>
@@ -395,7 +371,7 @@
             {step === 2 && (
               <div className="p-6 flex-1 flex flex-col animate-in slide-in-from-right-4 duration-500 ease-out">
                 <div className="mb-6">
-                  <h2 className="text-2xl font-extrabold text-slate-900 mb-2 tracking-tight">위험성평가 체크리스트</h2>
+                  <h2 className="text-2xl font-extrabold text-slate-900 mb-2 tracking-tight">맨홀공간 환기 위험성평가 체크리스트</h2>
                   <p className="text-slate-500 text-sm font-medium leading-relaxed">
                     안전한 환기계산을 위해 아래 항목들을 꼼꼼히 확인해 주세요.
                   </p>
