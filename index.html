@@ -42,6 +42,14 @@
     var manifestUrl = URL.createObjectURL(manifestBlob);
     document.write('<link rel="manifest" href="' + manifestUrl + '">');
     document.write('<link rel="apple-touch-icon" href="' + iconFileName + '">');
+
+    // 💡 안드로이드 자동 설치 팝업 조건을 만족시키기 위한 가상 Service Worker 등록
+    if ('serviceWorker' in navigator) {
+      var swCode = "self.addEventListener('fetch', function(e) {});";
+      var swBlob = new Blob([swCode], {type: 'application/javascript'});
+      var swUrl = URL.createObjectURL(swBlob);
+      navigator.serviceWorker.register(swUrl).catch(function(err){ console.log(err); });
+    }
   </script>
 
   <!-- Tailwind CSS -->
@@ -138,6 +146,8 @@
       const [q3, setQ3] = useState(null);
       const [q4, setQ4] = useState(null);
 
+      const [deferredPrompt, setDeferredPrompt] = useState(null);
+
       const resultRef = useRef(null);
 
       const getVolume = () => {
@@ -225,6 +235,17 @@
             setShowInstallBanner(true);
           }
         }
+
+        // 안드로이드 기본 앱 설치 팝업 이벤트 가로채기
+        const handleBeforeInstallPrompt = (e) => {
+          e.preventDefault();
+          setDeferredPrompt(e);
+        };
+        window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+
+        return () => {
+          window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+        };
       }, []);
 
       const dismissInstall = () => {
@@ -232,6 +253,22 @@
         // '나중에' 버튼 클릭 시, 현재 시간 기준 30분(30 * 60 * 1000 ms) 이후의 시간을 로컬스토리지에 저장
         const hideUntil = new Date().getTime() + 30 * 60 * 1000;
         localStorage.setItem('hideInstallPromptUntil', hideUntil);
+      };
+
+      const handleInstallClick = async () => {
+        if (deferredPrompt) {
+          // 안드로이드: 브라우저가 제공하는 시스템 기본 "앱 설치" 팝업 강제 실행
+          deferredPrompt.prompt();
+          const { outcome } = await deferredPrompt.userChoice;
+          if (outcome === 'accepted') {
+            setShowInstallBanner(false);
+          }
+          setDeferredPrompt(null);
+        } else {
+          // 아이폰(iOS)이거나 API를 지원하지 않는 브라우저: 수동 설치 안내 모달 표시
+          setShowInstallBanner(false);
+          setShowInstallInstructions(true);
+        }
       };
 
       const nextStep = () => setStep((s) => s + 1);
@@ -849,7 +886,7 @@
                 </div>
                 <div className="flex gap-2 mt-4">
                   <button onClick={dismissInstall} className="flex-1 py-2.5 rounded-xl text-xs font-bold bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors active:scale-95">나중에</button>
-                  <button onClick={() => {setShowInstallBanner(false); setShowInstallInstructions(true);}} className="flex-1 py-2.5 rounded-xl text-xs font-bold bg-blue-600 text-white shadow-md shadow-blue-500/20 hover:bg-blue-700 transition-colors active:scale-95">설치방법 보기</button>
+                  <button onClick={handleInstallClick} className="flex-1 py-2.5 rounded-xl text-xs font-bold bg-blue-600 text-white shadow-md shadow-blue-500/20 hover:bg-blue-700 transition-colors active:scale-95">앱 설치하기</button>
                 </div>
               </div>
             )}
