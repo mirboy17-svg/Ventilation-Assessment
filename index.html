@@ -697,15 +697,29 @@
                     </div>
                   </div>
 
-                  {fanHr < 5000 && (
+                  {(fanHr < 5000 || q1 === 'no' || q2 === 'no' || q3 === 'no' || q4 === 'no') && (
                     <div className="bg-rose-50 border border-rose-100 rounded-2xl p-5 shadow-sm">
-                      <h4 className="text-rose-800 font-bold text-sm mb-2 flex items-center gap-2">
+                      <h4 className="text-rose-800 font-bold text-sm mb-3 flex items-center gap-2">
                         <svg className="w-5 h-5 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                        환기정보에 따른 개선조치
+                        개선조치사항
                       </h4>
-                      <p className="text-xs text-rose-700/90 leading-relaxed font-semibold">
-                        덕트 내 압력 손실로 인한 환기 불량을 방지하기 위해, 배풍기는 최소 풍량 5,000 m³/hr(또는 정압 40 mmAq) 이상의 사양을 사용하여 주시기 바랍니다.
-                      </p>
+                      <ul className="text-xs text-rose-700/90 leading-relaxed font-semibold space-y-2 list-disc pl-4">
+                        {fanHr < 5000 && (
+                          <li>덕트 내 압력 손실로 인한 환기 불량을 방지하기 위해, 배풍기는 최소 풍량 5,000 m³/hr(또는 정압 40 mmAq) 이상의 사양을 사용하여 주시기 바랍니다.</li>
+                        )}
+                        {q1 === 'no' && (
+                          <li><span className="font-extrabold">배풍기 풍량 미확인:</span> 장비 제원표를 반드시 확인하여 정확한 환기량 산출이 가능하도록 파악하세요.</li>
+                        )}
+                        {q2 === 'no' && (
+                          <li><span className="font-extrabold">배풍기 정압 미확인:</span> 제원표를 확인하여 압력 손실에 대비하세요.</li>
+                        )}
+                        {q3 === 'no' && (
+                          <li><span className="font-extrabold">덕트 길이 기준 초과:</span> 덕트 길이를 줄이거나 고정압 배풍기를 사용하여 환기 효율 저하를 예방하세요.</li>
+                        )}
+                        {q4 === 'no' && (
+                          <li><span className="font-extrabold">덕트 하단 위치 불량:</span> 사각지대 방지를 위해 덕트를 밀폐공간 하단으로 재조정하세요.</li>
+                        )}
+                      </ul>
                     </div>
                   )}
 
