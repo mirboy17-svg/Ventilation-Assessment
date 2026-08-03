@@ -57,6 +57,38 @@
   <!-- html2canvas (결과 이미지 캡처용 라이브러리) -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
+  <!-- 개발자 도구 및 소스보기 방지 스크립트 -->
+  <script>
+    // 마우스 우클릭 방지
+    document.addEventListener('contextmenu', function(e) {
+      e.preventDefault();
+    });
+
+    // 키보드 단축키 방지 (F12, Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+U)
+    document.addEventListener('keydown', function(e) {
+      // F12 방지
+      if (e.keyCode === 123 || e.key === 'F12') {
+        e.preventDefault();
+        e.returnValue = false;
+      }
+      // Ctrl+Shift+I (개발자 도구) 방지
+      if (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.key === 'I' || e.key === 'i')) {
+        e.preventDefault();
+        e.returnValue = false;
+      }
+      // Ctrl+Shift+J (개발자 도구 콘솔) 방지
+      if (e.ctrlKey && e.shiftKey && (e.keyCode === 74 || e.key === 'J' || e.key === 'j')) {
+        e.preventDefault();
+        e.returnValue = false;
+      }
+      // Ctrl+U (페이지 소스 보기) 방지
+      if (e.ctrlKey && (e.keyCode === 85 || e.key === 'U' || e.key === 'u')) {
+        e.preventDefault();
+        e.returnValue = false;
+      }
+    });
+  </script>
+
   <style>
     body { font-family: 'Inter', 'Noto Sans KR', sans-serif; -webkit-tap-highlight-color: transparent; }
     .custom-scrollbar::-webkit-scrollbar { width: 6px; }
