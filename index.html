@@ -1,104 +1,104 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>밀폐공간 환기계산 웹앱</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>밀폐공간 환기 위험성평가</title>
   
-  <!-- 카카오톡 인앱 브라우저 외부 실행 스크립트 -->
+  <!-- 카카오톡 인앱 브라우저 감지 및 외부 브라우저(크롬/사파리) 강제 호출 스크립트 -->
   <script>
     var userAgent = navigator.userAgent.toLowerCase();
     if (userAgent.indexOf("kakaotalk") > -1) {
-      // 카카오톡 인앱 브라우저인 경우 외부 브라우저(크롬, 사파리 등)로 강제 자동 연결
-      window.location.href = 'kakaotalk://web/openExternal?url=' + encodeURIComponent(window.location.href);
+      location.href = 'kakaotalk://web/openExternal?url=' + encodeURIComponent(location.href);
     }
+  </script>
+
+  <!-- PWA 아이콘 변수 설정 (이미지 파일명 변경 시 여기만 수정하세요) -->
+  <script>
+    var iconFileName = "image_bf5585.jpg"; 
+    
+    // 동적으로 manifest 생성 및 적용
+    var manifestData = {
+      "name": "밀폐공간 환기계산",
+      "short_name": "환기계산",
+      "start_url": ".",
+      "display": "standalone",
+      "background_color": "#F4F7FB",
+      "theme_color": "#2563EB",
+      "icons": [
+        {
+          "src": iconFileName,
+          "sizes": "192x192",
+          "type": "image/png"
+        },
+        {
+          "src": iconFileName,
+          "sizes": "512x512",
+          "type": "image/png"
+        }
+      ]
+    };
+    var manifestBlob = new Blob([JSON.stringify(manifestData)], {type: 'application/json'});
+    var manifestUrl = URL.createObjectURL(manifestBlob);
+    document.write('<link rel="manifest" href="' + manifestUrl + '">');
+    document.write('<link rel="apple-touch-icon" href="' + iconFileName + '">');
   </script>
 
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
-  
-  <!-- React & ReactDOM (UMD versions for browser) -->
-  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+
+  <!-- React & ReactDOM (UMD 빌드) -->
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
   
   <!-- Babel for parsing JSX in browser -->
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
-  <!-- PWA & iOS Meta Tags (앱 설치 지원) -->
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="환기계산앱">
-  <link rel="apple-touch-icon" href="image_bf5001.png">
-  <link rel="manifest" href='data:application/manifest+json;charset=utf-8,%7B%22name%22%3A%22%EB%B0%80%ED%8F%90%EA%B3%B5%EA%B0%84%20%ED%99%98%EA%B8%B0%20%EC%9C%84%ED%97%98%EC%84%B1%ED%8F%89%EA%B0%80%22%2C%22short_name%22%3A%22%ED%99%98%EA%B8%B0%EA%B3%84%EC%82%B0%EC%95%B1%22%2C%22display%22%3A%22standalone%22%2C%22start_url%22%3A%22.%22%2C%22background_color%22%3A%22%23F4F7FB%22%2C%22theme_color%22%3A%22%232563EB%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22image_bf5001.png%22%2C%22sizes%22%3A%22192x192%22%2C%22type%22%3A%22image%2Fjpeg%22%7D%2C%7B%22src%22%3A%22image_bf5001.png%22%2C%22sizes%22%3A%22512x512%22%2C%22type%22%3A%22image%2Fjpeg%22%7D%5D%7D'>
-  
-  <!-- 가상 Service Worker 등록 (안드로이드 시스템 설치 팝업 유도용) -->
-  <script>
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', function() {
-        const swCode = "self.addEventListener('fetch', function(e) {});";
-        const blob = new Blob([swCode], {type: 'application/javascript'});
-        const swUrl = URL.createObjectURL(blob);
-        navigator.serviceWorker.register(swUrl).catch(function(err) {});
-      });
-    }
-  </script>
+  <!-- html2canvas (결과 이미지 캡처용 라이브러리) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
   <style>
-    /* Custom Scrollbar for better UX */
-    .custom-scrollbar::-webkit-scrollbar {
-      width: 4px;
-    }
-    .custom-scrollbar::-webkit-scrollbar-thumb {
-      background: #cbd5e1; 
-      border-radius: 4px;
-    }
-    /* Prevent text selection on buttons */
-    button {
-      user-select: none;
-      -webkit-user-select: none;
-    }
+    body { font-family: 'Inter', 'Noto Sans KR', sans-serif; -webkit-tap-highlight-color: transparent; }
+    .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    input[type="number"]::-webkit-inner-spin-button, 
+    input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
   </style>
 </head>
-<body class="bg-[#F4F7FB] antialiased">
-  
-  <!-- Root element for React -->
+<body class="bg-[#F4F7FB] text-slate-800">
   <div id="root"></div>
 
   <script type="text/babel">
-    const { useState, useEffect } = React;
+    const { useState, useEffect, useRef } = React;
 
     function App() {
       const [step, setStep] = useState(1);
       const [fanCapacity, setFanCapacity] = useState('');
       const [shape, setShape] = useState('');
       
-      // 홈 화면 추가(앱 설치) 프롬프트 상태
       const [showInstallBanner, setShowInstallBanner] = useState(false);
       const [showInstallInstructions, setShowInstallInstructions] = useState(false);
 
       const [width, setWidth] = useState('');
       const [length, setLength] = useState('');
-      
-      // Cylindrical dimensions
       const [diameter, setDiameter] = useState('');
-      
-      // Common dimension
       const [height, setHeight] = useState('');
 
-      // Combo dimensions
       const [comboRectWidth, setComboRectWidth] = useState('');
       const [comboRectLength, setComboRectLength] = useState('');
       const [comboRectHeight, setComboRectHeight] = useState('');
       const [comboCylDiameter, setComboCylDiameter] = useState('');
       const [comboCylHeight, setComboCylHeight] = useState('');
 
-      // 위험성평가 상태
       const [q1, setQ1] = useState(null);
       const [q2, setQ2] = useState(null);
       const [q3, setQ3] = useState(null);
       const [q4, setQ4] = useState(null);
 
-      // 체적 계산 함수
+      const resultRef = useRef(null);
+
       const getVolume = () => {
         if (shape === 'rect') {
           const w = parseFloat(width) || 0;
@@ -125,8 +125,6 @@
       };
 
       const volume = getVolume();
-
-      // 결과 계산
       const fanHr = parseFloat(fanCapacity) || 0;
       const reqTotalFanCapacityHr = volume * 24; 
       
@@ -143,52 +141,48 @@
       const actualFanCount = Math.ceil(rawFanCount > 0 ? rawFanCount : 0);
       const effectiveAirflowMin = (actualFanCount * fanHr * 0.8) / 60;
       const rawVentTime = effectiveAirflowMin > 0 ? (volume * 10) / effectiveAirflowMin : 0;
-      // 계산된 환기시간이 30분 미만이더라도 최소 30분으로 표시하기 위한 변수
       const ventTime = Math.max(Math.ceil(rawVentTime), 30); 
       const isMinimumForced = Math.ceil(rawVentTime) < 30 && effectiveAirflowMin > 0;
 
-      // 앱 설치 프롬프트 (자동 팝업 및 네이티브 PWA 지원)
-      useEffect(() => {
-        const handleBeforeInstallPrompt = (e) => {
-          e.preventDefault(); // 기본 브라우저 팝업 방지
-          window.deferredPrompt = e; // 이벤트 저장 (이후에 설치 버튼 누르면 호출)
-          if (!localStorage.getItem('dismissedInstallPrompt')) {
-            setShowInstallBanner(true); // 배너 띄우기
-          }
-        };
-        window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+      const saveAsImage = () => {
+        if (!resultRef.current) return;
+        
+        if (!window.html2canvas) {
+          alert('이미지 저장 기능을 불러오는 중입니다. 잠시 후 다시 시도해주세요.');
+          return;
+        }
 
+        window.html2canvas(resultRef.current, {
+          scale: 1.5, 
+          backgroundColor: '#F8FAFC', 
+        }).then(canvas => {
+          const imgData = canvas.toDataURL('image/jpeg', 0.7);
+          const link = document.createElement('a');
+          
+          const date = new Date();
+          const dateStr = `${date.getFullYear().toString().slice(-2)}${(date.getMonth()+1).toString().padStart(2,'0')}${date.getDate().toString().padStart(2,'0')}_${date.getHours().toString().padStart(2,'0')}${date.getMinutes().toString().padStart(2,'0')}`;
+          
+          link.download = `밀폐공간_환기계산결과_${dateStr}.jpg`;
+          link.href = imgData;
+          link.click();
+        }).catch(err => {
+          console.error('이미지 저장 오류:', err);
+          alert('이미지 저장 중 오류가 발생했습니다.');
+        });
+      };
+
+      useEffect(() => {
         const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone || document.referrer.includes('android-app://');
         const hasDismissed = localStorage.getItem('dismissedInstallPrompt');
 
-        // 접속 즉시 딜레이 없이 설치(다운로드) 배너 띄움
         if (!isStandalone && !hasDismissed) {
           setShowInstallBanner(true);
         }
-
-        return () => {
-          window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-        };
       }, []);
 
       const dismissInstall = () => {
         setShowInstallBanner(false);
         localStorage.setItem('dismissedInstallPrompt', 'true');
-      };
-
-      const handleInstallClick = () => {
-        if (window.deferredPrompt) {
-          // Android: 시스템 기본 설치 팝업 호출
-          window.deferredPrompt.prompt();
-          window.deferredPrompt.userChoice.then((choiceResult) => {
-            window.deferredPrompt = null;
-            setShowInstallBanner(false);
-          });
-        } else {
-          // iOS 또는 데스크탑: 설치 방법 수동 안내 모달 띄우기
-          setShowInstallBanner(false);
-          setShowInstallInstructions(true);
-        }
       };
 
       const nextStep = () => setStep((s) => s + 1);
@@ -213,10 +207,10 @@
       };
 
       return (
-        <div className="min-h-screen flex justify-center font-sans text-slate-800 selection:bg-blue-200 sm:p-4">
-          <div className="w-full max-w-md bg-white sm:rounded-[2.5rem] sm:shadow-[0_20px_60px_-15px_rgba(0,0,0,0.08)] min-h-screen sm:min-h-[850px] flex flex-col relative overflow-hidden sm:border border-slate-100/50">
+        <div className="min-h-screen bg-[#F4F7FB] flex justify-center font-sans text-slate-800 selection:bg-blue-200 sm:p-4">
+          <div className="w-full max-w-md bg-white sm:rounded-[2.5rem] sm:shadow-[0_20px_60px_-15px_rgba(0,0,0,0.08)] min-h-[100dvh] sm:min-h-[850px] flex flex-col relative overflow-hidden sm:border border-slate-100/50">
             
-            {/* Header with Back Button (마지막 페이지 포함) */}
+            {/* Header with Back Button */}
             {step > 1 && step <= 7 && (
               <header className="px-6 py-5 flex items-center bg-white/80 backdrop-blur-md sticky top-0 z-20 border-b border-slate-100/80">
                 <button 
@@ -237,56 +231,50 @@
               </header>
             )}
 
+            { }
             {step === 1 && (
-              <div className="flex flex-col items-center flex-1 px-5 pb-6 pt-6 animate-in fade-in duration-700 ease-out overflow-y-auto custom-scrollbar h-full">
-                {/* 1. 타이틀 섹션 (여백 축소) */}
-                <div className="text-center mb-4 w-full space-y-2 shrink-0">
-                  <span className="inline-block py-1.5 px-3 rounded-full bg-blue-50 text-blue-600 text-[10px] font-bold tracking-wide mb-1">
+              <div className="flex flex-col flex-1 pb-6 pt-10 animate-in fade-in duration-700 ease-out h-full max-h-[100dvh]">
+                <div className="text-center w-full space-y-3 px-6 mb-6 shrink-0">
+                  <span className="inline-block py-1.5 px-4 rounded-full bg-blue-50 text-blue-600 text-xs font-bold tracking-wide mb-1">
                     안전보건공단 KOSHA GUIDE 기준
                   </span>
-                  <h1 className="text-[1.75rem] font-extrabold text-slate-900 tracking-tight leading-tight">
+                  <h1 className="text-[2.2rem] font-extrabold text-slate-900 tracking-tight leading-tight">
                     밀폐공간 환기 <br/>
                     <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-500">
                       위험성평가
                     </span>
                   </h1>
-                  <p className="text-slate-500 text-[13px] mt-2 font-medium px-2 leading-relaxed">
+                  <p className="text-slate-500 text-sm mt-3 font-medium px-4">
                     작업 전 필수적인 위험성평가와 적정 환기량을 빠르고 정확하게 산출합니다.
                   </p>
                 </div>
 
-                {/* 2. 메인 이미지 (잘리지 않도록 전체 표시) */}
-                <div className="w-full relative rounded-[1.25rem] overflow-hidden shadow-[0_10px_30px_-10px_rgba(37,99,235,0.15)] ring-1 ring-slate-100/50 shrink-0 bg-white flex justify-center items-center py-2">
-                  <img 
-                    src="image_bf5001.png" 
-                    alt="밀폐공간 환기 예시" 
-                    className="w-full max-h-[28vh] min-h-[160px] object-contain hover:scale-105 transition-transform duration-700"
-                    onError={(e) => { e.target.src = 'https://placehold.co/600x400/e2e8f0/64748b?text=Image+Not+Found'; }}
-                  />
+                <div className="w-full relative shrink-0">
+                  <div className="w-full aspect-[4/3] relative overflow-hidden bg-white shadow-sm border-y border-slate-100">
+                    <img 
+                      src="image_bf5585.jpg" 
+                      alt="밀폐공간 환기 예시" 
+                      className="absolute inset-0 w-full h-full object-contain"
+                    />
+                  </div>
                 </div>
 
-                {/* 3. 시작하기 버튼 (이미지와 로고 중간에 자연스럽게 배치) */}
-                <div className="w-full my-auto py-6 shrink-0">
+                <div className="px-6 flex-1 flex flex-col justify-center my-auto w-full max-w-sm mx-auto min-h-[100px]">
                   <button 
                     onClick={nextStep} 
-                    className="w-full bg-slate-900 hover:bg-blue-600 text-white font-bold py-3.5 rounded-2xl shadow-xl hover:shadow-blue-500/25 active:scale-[0.98] transition-all duration-300 text-lg"
+                    className="w-full bg-slate-900 hover:bg-blue-600 text-white font-bold py-[1.15rem] rounded-2xl shadow-xl hover:shadow-blue-500/25 active:scale-[0.98] transition-all duration-300 text-lg"
                   >
                     시작하기
                   </button>
                 </div>
 
-                {/* 4. 하단 로고 (화면 맨 아래) */}
-                <div className="w-full flex justify-center items-center opacity-90 hover:opacity-100 transition-opacity shrink-0 pb-2">
-                  <img 
-                    src="image_bfaefe.png" 
-                    alt="고용노동부 창원고용노동지청 로고" 
-                    className="h-8 sm:h-10 object-contain drop-shadow-sm" 
-                    onError={(e) => { e.target.src = 'https://placehold.co/300x80/ffffff/1e293b?text=Logos+Here'; }}
-                  />
+                <div className="w-full shrink-0 flex justify-center items-end opacity-90 px-6 pb-2">
+                  <img src="image_bfaefe.png" alt="하단 로고" className="h-10 sm:h-12 object-contain" />
                 </div>
               </div>
             )}
 
+            { }
             {step === 2 && (
               <div className="p-6 flex-1 flex flex-col animate-in slide-in-from-right-4 duration-500 ease-out">
                 <div className="mb-6">
@@ -297,7 +285,6 @@
                 </div>
 
                 <div className="space-y-4 overflow-y-auto pb-4 custom-scrollbar">
-                  {/* Q1 */}
                   <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm hover:border-blue-100 transition-colors">
                     <p className="font-bold text-slate-800 mb-4 text-sm leading-snug">
                       <span className="text-blue-600 mr-1">1.</span> 보유 배풍기 풍량(m³/hr)을 아시나요?
@@ -308,7 +295,6 @@
                     </div>
                   </div>
 
-                  {/* Q2 */}
                   <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm hover:border-blue-100 transition-colors">
                     <p className="font-bold text-slate-800 mb-4 text-sm leading-snug">
                       <span className="text-blue-600 mr-1">2.</span> 보유 배풍기 정압(mmAq)을 아시나요?
@@ -319,7 +305,6 @@
                     </div>
                   </div>
 
-                  {/* Q3 */}
                   <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm hover:border-blue-100 transition-colors">
                     <p className="font-bold text-slate-800 mb-4 text-sm leading-snug">
                       <span className="text-blue-600 mr-1">3.</span> 배풍기 덕트 길이는 15m 이하거나 제조사 권장 기준을 준수하셨나요?
@@ -330,7 +315,6 @@
                     </div>
                   </div>
 
-                  {/* Q4 */}
                   <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm hover:border-blue-100 transition-colors">
                     <p className="font-bold text-slate-800 mb-4 text-sm leading-snug">
                       <span className="text-blue-600 mr-1">4.</span> 배풍기 덕트 끝부분이 밀폐공간 가장 하단에 위치하고 있나요?
@@ -354,8 +338,9 @@
               </div>
             )}
 
+            { }
             {step === 3 && (
-              <div className="p-6 flex-1 flex flex-col bg-[#F8FAFC] animate-in slide-in-from-right-4 duration-500 ease-out overflow-y-auto custom-scrollbar">
+              <div className="p-6 flex-1 flex flex-col bg-[#F8FAFC] animate-in slide-in-from-right-4 duration-500 ease-out overflow-y-auto">
                 <div className="mb-6">
                   <h2 className="text-2xl font-extrabold text-slate-900 mb-2 tracking-tight">평가 리포트</h2>
                   <p className="text-slate-500 text-sm font-medium leading-relaxed">
@@ -396,7 +381,7 @@
                     <h3 className="font-extrabold text-rose-800 text-sm tracking-tight">감소대책 조치사항</h3>
                   </div>
                   <p className="text-xs text-rose-700/90 leading-relaxed font-semibold">
-                    보유 배풍기 풍량이 <span className="bg-rose-200/50 px-1 rounded">5,000 m³/hr 이하</span>일 경우 정압은 <span className="bg-rose-200/50 px-1 rounded">40mmAq 미만</span>이 될 수 있으므로, 풍량 5,000 m³/hr(또는 정압 40mmAq) 이상의 장비로 교체하여 주시기 바랍니다.
+                    보유 배풍기 풍량이 <span className="bg-rose-200/50 px-1 rounded">5,000 m³/hr 이하</span>일 경우 정압은 <span className="bg-rose-200/50 px-1 rounded">40mmAq 미만</span>이 될 수 있으므로, <span className="text-rose-700 font-bold">풍량 5,000 m³/hr(또는 정압 40mmAq) 이상의 장비로 교체</span>하여 주시기 바랍니다.
                   </p>
                 </div>
 
@@ -411,6 +396,7 @@
               </div>
             )}
 
+            { }
             {step === 4 && (
               <div className="p-6 flex-1 flex flex-col animate-in slide-in-from-right-4 duration-500 ease-out">
                 <div className="mb-8">
@@ -421,12 +407,11 @@
                 </div>
 
                 <div className="space-y-4">
-                  {/* Alert message for capacity < 5000 (Moved above the input) */}
-                  <div className={`transition-all duration-500 overflow-hidden ${parseFloat(fanCapacity) > 0 && parseFloat(fanCapacity) < 5000 ? 'max-h-40 opacity-100 mb-2' : 'max-h-0 opacity-0 mb-0'}`}>
-                    <div className="p-4 bg-orange-50 border border-orange-100 rounded-2xl flex items-start gap-3 shadow-sm">
-                      <span className="text-orange-500 mt-0.5 text-lg">⚠️</span>
+                  <div className={`transition-all duration-500 overflow-hidden ${parseFloat(fanCapacity) > 0 && parseFloat(fanCapacity) < 5000 ? 'max-h-40 opacity-100 mb-4' : 'max-h-0 opacity-0 mb-0'}`}>
+                    <div className="p-4 bg-orange-50 border border-orange-100 rounded-2xl flex items-start gap-3">
+                      <span className="text-orange-500 mt-0.5">⚠️</span>
                       <p className="text-xs text-orange-700 font-bold leading-relaxed">
-                        주의문구 : 5,000 m³/hr 이상 풍량일 경우 정압 40mmAq 이상이 되므로, 풍량 5,000 m³/hr 이상의 배풍기를 구매하여 주시기 바랍니다.
+                        5,000 m³/hr 이상 풍량일 경우 정압 40mmAq 이상이 되므로, 풍량 5,000 m³/hr 이상의 배풍기를 구매하여 주시기 바랍니다.
                       </p>
                     </div>
                   </div>
@@ -446,7 +431,7 @@
                 </div>
 
                 <div className="mt-auto pt-8 pb-4">
-                  <button 
+                   <button 
                     onClick={nextStep} 
                     disabled={!fanCapacity || parseFloat(fanCapacity) <= 0} 
                     className="w-full bg-blue-600 disabled:bg-slate-100 disabled:text-slate-400 text-white font-bold py-4 rounded-2xl shadow-lg hover:shadow-blue-500/30 disabled:shadow-none active:scale-[0.98] transition-all duration-300 text-lg"
@@ -457,6 +442,7 @@
               </div>
             )}
 
+            { }
             {step === 5 && (
               <div className="p-6 flex-1 flex flex-col animate-in slide-in-from-right-4 duration-500 ease-out">
                 <div className="mb-8">
@@ -520,8 +506,9 @@
               </div>
             )}
 
+            { }
             {step === 6 && (
-              <div className="p-6 flex-1 flex flex-col animate-in slide-in-from-right-4 duration-500 ease-out overflow-y-auto custom-scrollbar">
+              <div className="p-6 flex-1 flex flex-col animate-in slide-in-from-right-4 duration-500 ease-out overflow-y-auto">
                 <div className="mb-6">
                   <h2 className="text-2xl font-extrabold text-slate-900 mb-3 tracking-tight">
                     {shape === 'rect' ? '직사각형' : shape === 'cyl' ? '원통형' : '결합형'} 제원 입력
@@ -536,93 +523,71 @@
                 <div className="space-y-3 pb-4">
                   {shape === 'rect' ? (
                     <>
-                      <div className="flex justify-between items-center bg-white p-4 rounded-2xl border border-slate-200 shadow-sm transition-all focus-within:border-blue-500 focus-within:ring-4 focus-within:ring-blue-500/10">
-                        <span className="font-bold text-slate-600 text-base ml-1">가로</span>
-                        <div className="flex items-center gap-2">
-                          <input type="number" value={width} onChange={e => setWidth(e.target.value)} placeholder="0.0" className="w-28 text-right text-2xl p-2 bg-slate-50 rounded-xl outline-none font-black text-slate-800 focus:bg-blue-50 focus:text-blue-700 transition-colors shadow-inner" />
-                          <span className="font-bold text-slate-400 w-6">m</span>
-                        </div>
+                      <div className="flex items-center bg-white p-3 rounded-2xl border border-slate-200 shadow-sm focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/20 transition-all">
+                        <span className="w-12 pl-2 font-bold text-slate-500 text-sm">가로</span>
+                        <input type="number" value={width} onChange={e => setWidth(e.target.value)} placeholder="0.0" className="flex-1 text-right text-xl p-1 outline-none font-black text-slate-800 bg-transparent" />
+                        <span className="w-8 text-center font-bold text-slate-300">m</span>
                       </div>
-                      <div className="flex justify-between items-center bg-white p-4 rounded-2xl border border-slate-200 shadow-sm transition-all focus-within:border-blue-500 focus-within:ring-4 focus-within:ring-blue-500/10">
-                        <span className="font-bold text-slate-600 text-base ml-1">세로</span>
-                        <div className="flex items-center gap-2">
-                          <input type="number" value={length} onChange={e => setLength(e.target.value)} placeholder="0.0" className="w-28 text-right text-2xl p-2 bg-slate-50 rounded-xl outline-none font-black text-slate-800 focus:bg-blue-50 focus:text-blue-700 transition-colors shadow-inner" />
-                          <span className="font-bold text-slate-400 w-6">m</span>
-                        </div>
+                      <div className="flex items-center bg-white p-3 rounded-2xl border border-slate-200 shadow-sm focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/20 transition-all">
+                        <span className="w-12 pl-2 font-bold text-slate-500 text-sm">세로</span>
+                        <input type="number" value={length} onChange={e => setLength(e.target.value)} placeholder="0.0" className="flex-1 text-right text-xl p-1 outline-none font-black text-slate-800 bg-transparent" />
+                        <span className="w-8 text-center font-bold text-slate-300">m</span>
                       </div>
-                      <div className="flex justify-between items-center bg-white p-4 rounded-2xl border border-slate-200 shadow-sm transition-all focus-within:border-blue-500 focus-within:ring-4 focus-within:ring-blue-500/10">
-                        <span className="font-bold text-slate-600 text-base ml-1">높이</span>
-                        <div className="flex items-center gap-2">
-                          <input type="number" value={height} onChange={e => setHeight(e.target.value)} placeholder="0.0" className="w-28 text-right text-2xl p-2 bg-slate-50 rounded-xl outline-none font-black text-slate-800 focus:bg-blue-50 focus:text-blue-700 transition-colors shadow-inner" />
-                          <span className="font-bold text-slate-400 w-6">m</span>
-                        </div>
+                      <div className="flex items-center bg-white p-3 rounded-2xl border border-slate-200 shadow-sm focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/20 transition-all">
+                        <span className="w-12 pl-2 font-bold text-slate-500 text-sm">높이</span>
+                        <input type="number" value={height} onChange={e => setHeight(e.target.value)} placeholder="0.0" className="flex-1 text-right text-xl p-1 outline-none font-black text-slate-800 bg-transparent" />
+                        <span className="w-8 text-center font-bold text-slate-300">m</span>
                       </div>
                     </>
                   ) : shape === 'cyl' ? (
                     <>
-                      <div className="flex justify-between items-center bg-white p-4 rounded-2xl border border-slate-200 shadow-sm transition-all focus-within:border-blue-500 focus-within:ring-4 focus-within:ring-blue-500/10">
-                        <span className="font-bold text-slate-600 text-base ml-1">지름</span>
-                        <div className="flex items-center gap-2">
-                          <input type="number" value={diameter} onChange={e => setDiameter(e.target.value)} placeholder="0.0" className="w-28 text-right text-2xl p-2 bg-slate-50 rounded-xl outline-none font-black text-slate-800 focus:bg-blue-50 focus:text-blue-700 transition-colors shadow-inner" />
-                          <span className="font-bold text-slate-400 w-6">m</span>
-                        </div>
+                      <div className="flex items-center bg-white p-3 rounded-2xl border border-slate-200 shadow-sm focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/20 transition-all">
+                        <span className="w-12 pl-2 font-bold text-slate-500 text-sm">지름</span>
+                        <input type="number" value={diameter} onChange={e => setDiameter(e.target.value)} placeholder="0.0" className="flex-1 text-right text-xl p-1 outline-none font-black text-slate-800 bg-transparent" />
+                        <span className="w-8 text-center font-bold text-slate-300">m</span>
                       </div>
-                      <div className="flex justify-between items-center bg-white p-4 rounded-2xl border border-slate-200 shadow-sm transition-all focus-within:border-blue-500 focus-within:ring-4 focus-within:ring-blue-500/10">
-                        <span className="font-bold text-slate-600 text-base ml-1">높이</span>
-                        <div className="flex items-center gap-2">
-                          <input type="number" value={height} onChange={e => setHeight(e.target.value)} placeholder="0.0" className="w-28 text-right text-2xl p-2 bg-slate-50 rounded-xl outline-none font-black text-slate-800 focus:bg-blue-50 focus:text-blue-700 transition-colors shadow-inner" />
-                          <span className="font-bold text-slate-400 w-6">m</span>
-                        </div>
+                      <div className="flex items-center bg-white p-3 rounded-2xl border border-slate-200 shadow-sm focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/20 transition-all">
+                        <span className="w-12 pl-2 font-bold text-slate-500 text-sm">높이</span>
+                        <input type="number" value={height} onChange={e => setHeight(e.target.value)} placeholder="0.0" className="flex-1 text-right text-xl p-1 outline-none font-black text-slate-800 bg-transparent" />
+                        <span className="w-8 text-center font-bold text-slate-300">m</span>
                       </div>
                     </>
                   ) : (
                     <div className="space-y-6">
-                      {/* Combo: Rectangular part */}
                       <div className="space-y-3">
                         <h4 className="font-bold text-slate-700 text-sm ml-1 flex items-center gap-2">
                           <span className="w-1.5 h-1.5 rounded-full bg-blue-500"></span>직사각형 부분
                         </h4>
-                        <div className="flex justify-between items-center bg-white p-4 rounded-2xl border border-slate-200 shadow-sm transition-all focus-within:border-blue-500 focus-within:ring-4 focus-within:ring-blue-500/10">
-                          <span className="font-bold text-slate-600 text-base ml-1">가로</span>
-                          <div className="flex items-center gap-2">
-                            <input type="number" value={comboRectWidth} onChange={e => setComboRectWidth(e.target.value)} placeholder="0.0" className="w-28 text-right text-2xl p-2 bg-slate-50 rounded-xl outline-none font-black text-slate-800 focus:bg-blue-50 focus:text-blue-700 transition-colors shadow-inner" />
-                            <span className="font-bold text-slate-400 w-6">m</span>
-                          </div>
+                        <div className="flex items-center bg-white p-3 rounded-2xl border border-slate-200 shadow-sm focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/20 transition-all">
+                          <span className="w-12 pl-2 font-bold text-slate-500 text-sm">가로</span>
+                          <input type="number" value={comboRectWidth} onChange={e => setComboRectWidth(e.target.value)} placeholder="0.0" className="flex-1 text-right text-xl p-1 outline-none font-black text-slate-800 bg-transparent" />
+                          <span className="w-8 text-center font-bold text-slate-300">m</span>
                         </div>
-                        <div className="flex justify-between items-center bg-white p-4 rounded-2xl border border-slate-200 shadow-sm transition-all focus-within:border-blue-500 focus-within:ring-4 focus-within:ring-blue-500/10">
-                          <span className="font-bold text-slate-600 text-base ml-1">세로</span>
-                          <div className="flex items-center gap-2">
-                            <input type="number" value={comboRectLength} onChange={e => setComboRectLength(e.target.value)} placeholder="0.0" className="w-28 text-right text-2xl p-2 bg-slate-50 rounded-xl outline-none font-black text-slate-800 focus:bg-blue-50 focus:text-blue-700 transition-colors shadow-inner" />
-                            <span className="font-bold text-slate-400 w-6">m</span>
-                          </div>
+                        <div className="flex items-center bg-white p-3 rounded-2xl border border-slate-200 shadow-sm focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/20 transition-all">
+                          <span className="w-12 pl-2 font-bold text-slate-500 text-sm">세로</span>
+                          <input type="number" value={comboRectLength} onChange={e => setComboRectLength(e.target.value)} placeholder="0.0" className="flex-1 text-right text-xl p-1 outline-none font-black text-slate-800 bg-transparent" />
+                          <span className="w-8 text-center font-bold text-slate-300">m</span>
                         </div>
-                        <div className="flex justify-between items-center bg-white p-4 rounded-2xl border border-slate-200 shadow-sm transition-all focus-within:border-blue-500 focus-within:ring-4 focus-within:ring-blue-500/10">
-                          <span className="font-bold text-slate-600 text-base ml-1">높이</span>
-                          <div className="flex items-center gap-2">
-                            <input type="number" value={comboRectHeight} onChange={e => setComboRectHeight(e.target.value)} placeholder="0.0" className="w-28 text-right text-2xl p-2 bg-slate-50 rounded-xl outline-none font-black text-slate-800 focus:bg-blue-50 focus:text-blue-700 transition-colors shadow-inner" />
-                            <span className="font-bold text-slate-400 w-6">m</span>
-                          </div>
+                        <div className="flex items-center bg-white p-3 rounded-2xl border border-slate-200 shadow-sm focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/20 transition-all">
+                          <span className="w-12 pl-2 font-bold text-slate-500 text-sm">높이</span>
+                          <input type="number" value={comboRectHeight} onChange={e => setComboRectHeight(e.target.value)} placeholder="0.0" className="flex-1 text-right text-xl p-1 outline-none font-black text-slate-800 bg-transparent" />
+                          <span className="w-8 text-center font-bold text-slate-300">m</span>
                         </div>
                       </div>
                       
-                      {/* Combo: Cylindrical part */}
                       <div className="space-y-3">
                         <h4 className="font-bold text-slate-700 text-sm ml-1 flex items-center gap-2">
                           <span className="w-1.5 h-1.5 rounded-full bg-cyan-500"></span>원통형 부분
                         </h4>
-                        <div className="flex justify-between items-center bg-white p-4 rounded-2xl border border-slate-200 shadow-sm transition-all focus-within:border-blue-500 focus-within:ring-4 focus-within:ring-blue-500/10">
-                          <span className="font-bold text-slate-600 text-base ml-1">지름</span>
-                          <div className="flex items-center gap-2">
-                            <input type="number" value={comboCylDiameter} onChange={e => setComboCylDiameter(e.target.value)} placeholder="0.0" className="w-28 text-right text-2xl p-2 bg-slate-50 rounded-xl outline-none font-black text-slate-800 focus:bg-blue-50 focus:text-blue-700 transition-colors shadow-inner" />
-                            <span className="font-bold text-slate-400 w-6">m</span>
-                          </div>
+                        <div className="flex items-center bg-white p-3 rounded-2xl border border-slate-200 shadow-sm focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/20 transition-all">
+                          <span className="w-12 pl-2 font-bold text-slate-500 text-sm">지름</span>
+                          <input type="number" value={comboCylDiameter} onChange={e => setComboCylDiameter(e.target.value)} placeholder="0.0" className="flex-1 text-right text-xl p-1 outline-none font-black text-slate-800 bg-transparent" />
+                          <span className="w-8 text-center font-bold text-slate-300">m</span>
                         </div>
-                        <div className="flex justify-between items-center bg-white p-4 rounded-2xl border border-slate-200 shadow-sm transition-all focus-within:border-blue-500 focus-within:ring-4 focus-within:ring-blue-500/10">
-                          <span className="font-bold text-slate-600 text-base ml-1">높이</span>
-                          <div className="flex items-center gap-2">
-                            <input type="number" value={comboCylHeight} onChange={e => setComboCylHeight(e.target.value)} placeholder="0.0" className="w-28 text-right text-2xl p-2 bg-slate-50 rounded-xl outline-none font-black text-slate-800 focus:bg-blue-50 focus:text-blue-700 transition-colors shadow-inner" />
-                            <span className="font-bold text-slate-400 w-6">m</span>
-                          </div>
+                        <div className="flex items-center bg-white p-3 rounded-2xl border border-slate-200 shadow-sm focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/20 transition-all">
+                          <span className="w-12 pl-2 font-bold text-slate-500 text-sm">높이</span>
+                          <input type="number" value={comboCylHeight} onChange={e => setComboCylHeight(e.target.value)} placeholder="0.0" className="flex-1 text-right text-xl p-1 outline-none font-black text-slate-800 bg-transparent" />
+                          <span className="w-8 text-center font-bold text-slate-300">m</span>
                         </div>
                       </div>
                     </div>
@@ -637,7 +602,7 @@
                 </div>
 
                 <div className="mt-6 pt-2 pb-4 shrink-0">
-                  <button 
+                   <button 
                     onClick={nextStep} 
                     disabled={volume <= 0} 
                     className="w-full bg-blue-600 disabled:bg-slate-100 disabled:text-slate-400 text-white font-bold py-4 rounded-2xl shadow-lg hover:shadow-blue-500/30 disabled:shadow-none active:scale-[0.98] transition-all duration-300 text-lg"
@@ -648,10 +613,12 @@
               </div>
             )}
 
+            { }
             {step === 7 && (
               <div className="flex-1 flex flex-col bg-[#F8FAFC] animate-in zoom-in-95 duration-500 ease-out overflow-y-auto custom-scrollbar">
-                <div className="p-6 space-y-5 pt-8">
-                  {/* Info Summary */}
+                
+                {/* 캡처 대상 영역 */}
+                <div ref={resultRef} className="p-6 space-y-5 pt-8 bg-[#F8FAFC]">
                   <div className="bg-white border border-slate-100 rounded-2xl p-5 shadow-sm">
                     <h3 className="text-sm font-black text-blue-600 tracking-tight mb-4 ml-1">밀폐공간 환기 정보 요약</h3>
                     <div className="space-y-2 text-sm">
@@ -670,7 +637,6 @@
                     </div>
                   </div>
 
-                  {/* 환기정보에 따른 개선조치 (풍량 5000 미만일 경우 표시) */}
                   {fanHr < 5000 && (
                     <div className="bg-rose-50 border border-rose-100 rounded-2xl p-5 shadow-sm">
                       <h4 className="text-rose-800 font-bold text-sm mb-2 flex items-center gap-2">
@@ -683,11 +649,10 @@
                     </div>
                   )}
 
-                  {/* Main Results */}
                   <div className="space-y-4">
                     <div className="bg-gradient-to-br from-blue-600 to-cyan-500 rounded-2xl p-6 shadow-lg shadow-blue-500/20 text-white relative overflow-hidden">
                       <div className="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-white/10 rounded-full blur-2xl"></div>
-                      <h3 className="text-white font-extrabold text-lg mb-1 tracking-tight">1. (작업 전) 환기시간</h3>
+                      <h3 className="text-white font-extrabold text-[1.15rem] mb-1 tracking-tight">1. (작업 전) 환기시간</h3>
                       <p className="text-[10px] text-blue-200/80 mb-4 font-semibold tracking-wide">
                         ※ 밀폐공간 체적 10배 급기, 배풍기 효율 80% 기준
                       </p>
@@ -707,7 +672,7 @@
 
                     <div className="bg-gradient-to-br from-blue-600 to-cyan-500 rounded-2xl p-6 shadow-lg shadow-blue-500/20 text-white relative overflow-hidden">
                       <div className="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-white/10 rounded-full blur-2xl"></div>
-                      <h3 className="text-white font-extrabold text-lg mb-1 tracking-tight">2. (작업 중) 적정 배풍기 수량</h3>
+                      <h3 className="text-white font-extrabold text-[1.15rem] mb-1 tracking-tight">2. (작업 중) 배풍기 환기 가동 대수</h3>
                       <p className="text-[10px] text-blue-200/80 mb-4 font-semibold tracking-wide">
                         ※ 시간당 20회 환기, 배풍기 효율 80% 적용 기준
                       </p>
@@ -717,27 +682,34 @@
                       
                       {rawFanCount > 1 && (
                         <div className="mt-4 bg-white/95 p-3.5 rounded-xl border border-rose-100 shadow-sm backdrop-blur-sm">
-                          <p className="text-xs text-rose-600 font-bold leading-relaxed">
+                          <p className="text-[13px] text-rose-600 font-extrabold leading-relaxed">
                             ⚠️ 현재 배풍기를 해당 대수만큼 추가하여 환기 실시 바랍니다.
                           </p>
                         </div>
                       )}
                     </div>
                   </div>
+                </div>
 
-                  <div className="pt-4 pb-6">
-                    <button 
-                      onClick={reset} 
-                      className="w-full bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-800 font-bold py-4 rounded-2xl active:scale-[0.98] transition-all duration-300 text-sm"
-                    >
-                      새로운 계산하기
-                    </button>
-                  </div>
+                <div className="px-6 pt-2 pb-6 space-y-3 shrink-0">
+                  <button 
+                    onClick={saveAsImage} 
+                    className="w-full bg-slate-800 hover:bg-slate-700 text-white font-bold py-4 rounded-2xl shadow-lg active:scale-[0.98] transition-all duration-300 text-sm flex items-center justify-center gap-2"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                    종합결과 이미지로 저장하기
+                  </button>
+                  <button 
+                    onClick={reset} 
+                    className="w-full bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-800 font-bold py-4 rounded-2xl active:scale-[0.98] transition-all duration-300 text-sm"
+                  >
+                    새로운 계산하기
+                  </button>
                 </div>
               </div>
             )}
 
-            {/* 앱 설치(홈 화면 추가) 배너 */}
+            { }
             {showInstallBanner && !showInstallInstructions && (
               <div className="absolute bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-sm bg-white rounded-3xl p-5 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)] border border-slate-100 z-50 animate-in slide-in-from-bottom-10 fade-in duration-500">
                 <div className="flex items-start gap-4">
@@ -745,18 +717,17 @@
                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
                   </div>
                   <div className="flex-1">
-                    <h4 className="font-extrabold text-slate-900 text-sm mb-1">앱 다운로드 (홈 화면 추가)</h4>
-                    <p className="text-xs text-slate-500 font-medium leading-relaxed">바탕화면에 설치하여 언제든 빠르고 편리하게 앱을 사용하세요!</p>
+                    <h4 className="font-extrabold text-slate-900 text-sm mb-1">앱 다운로드 및 설치</h4>
+                    <p className="text-xs text-slate-500 font-medium leading-relaxed">바탕화면에 아이콘을 추가하여 언제든 빠르게 실행하세요!</p>
                   </div>
                 </div>
                 <div className="flex gap-2 mt-4">
                   <button onClick={dismissInstall} className="flex-1 py-2.5 rounded-xl text-xs font-bold bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors active:scale-95">나중에</button>
-                  <button onClick={handleInstallClick} className="flex-1 py-2.5 rounded-xl text-xs font-bold bg-blue-600 text-white shadow-md shadow-blue-500/20 hover:bg-blue-700 transition-colors active:scale-95">다운로드(설치)</button>
+                  <button onClick={() => {setShowInstallBanner(false); setShowInstallInstructions(true);}} className="flex-1 py-2.5 rounded-xl text-xs font-bold bg-blue-600 text-white shadow-md shadow-blue-500/20 hover:bg-blue-700 transition-colors active:scale-95">설치방법 보기</button>
                 </div>
               </div>
             )}
 
-            {/* 앱 설치 방법 안내 모달 */}
             {showInstallInstructions && (
               <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm z-[100] flex items-center justify-center p-4 animate-in fade-in duration-300">
                 <div className="bg-white rounded-[2.5rem] p-6 w-full max-w-sm shadow-2xl relative animate-in zoom-in-95 duration-300">
@@ -773,7 +744,6 @@
                   </div>
 
                   <div className="space-y-4">
-                    {/* iOS Instructions */}
                     <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 shadow-sm">
                       <h4 className="font-bold text-slate-800 text-sm mb-2 flex items-center gap-2">
                         <svg className="w-4 h-4 text-slate-400" viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91 1.62.15 3.09.84 4.01 2.15-3.16 1.9-2.61 6.54.49 7.76-.75 1.83-1.68 3.5-2.71 4.75zM15.42 6.51c.71-.85 1.19-2.04 1.06-3.21-1.02.04-2.27.68-3 1.54-.65.77-1.23 2.01-1.07 3.15 1.13.09 2.3-.59 3.01-1.48z"/></svg>
@@ -786,16 +756,15 @@
                       </ol>
                     </div>
 
-                    {/* Android Instructions */}
                     <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 shadow-sm">
                       <h4 className="font-bold text-slate-800 text-sm mb-2 flex items-center gap-2">
                         <svg className="w-4 h-4 text-green-500" viewBox="0 0 24 24" fill="currentColor"><path d="M17.523 15.3414c-.5511 0-1.002-.451-1.002-1.0021 0-.5512.451-1.0022 1.002-1.0022.5512 0 1.0022.451 1.0022 1.0022 0 .5511-.451 1.0021-1.0022 1.0021m-11.046 0c-.5511 0-1.002-.451-1.002-1.0021 0-.5512.451-1.0022 1.002-1.0022.5511 0 1.0021.451 1.0021 1.0022 0 .5511-.451 1.0021-1.0021 1.0021m11.4045-6.023l1.844-3.1932c.1052-.1821.043-.4141-.1391-.5191-.1822-.1052-.4141-.0431-.5192.139l-1.8562 3.2152C15.7061 8.2435 13.9312 7.7634 12 7.7634c-1.9311 0-3.7062.4801-5.2112 1.1983L4.9328 5.7461c-.1052-.1821-.3371-.2442-.5191-.139-.1822.1051-.2443.3371-.1392.5191l1.8441 3.1932C2.6517 11.2386.3262 14.8845.021 19.3402h23.958c-.3052-4.4557-2.6307-8.1016-6.0975-10.0218"/></svg>
-                        Android (Chrome)
+                        Android (Chrome/Samsung)
                       </h4>
                       <ol className="text-[13px] text-slate-600 space-y-2 pl-5 list-decimal font-medium">
-                        <li>우측 상단의 <span className="inline-flex px-1.5 py-0.5 bg-white border border-slate-200 rounded font-bold shadow-sm align-middle mx-0.5">⋮</span> 메뉴를 누릅니다.</li>
+                        <li>우측 하단/상단의 <span className="inline-flex px-1.5 py-0.5 bg-white border border-slate-200 rounded font-bold shadow-sm align-middle mx-0.5">⋮</span> 혹은 <b>≡</b> 메뉴를 누릅니다.</li>
                         <li><b>'홈 화면에 추가'</b> 또는 <b>'앱 설치'</b>를 선택합니다.</li>
-                        <li>화면의 안내에 따라 <b>'설치'</b>를 누릅니다.</li>
+                        <li>화면의 안내에 따라 <b>'설치(추가)'</b>를 누릅니다.</li>
                       </ol>
                     </div>
                   </div>
