@@ -506,7 +506,7 @@
               </div>
             )}
 
-            { }
+            {}
             {step === 6 && (
               <div className="p-6 flex-1 flex flex-col animate-in slide-in-from-right-4 duration-500 ease-out overflow-y-auto custom-scrollbar">
                 <div className="mb-6">
@@ -520,101 +520,121 @@
                   </div>
                 </div>
 
-                <div className="space-y-3 pb-4">
+                <div className="w-full max-w-[280px] mx-auto mt-2 pb-4">
                   {shape === 'rect' ? (
-                    <>
-                      <div className="flex items-center bg-white rounded-xl border border-slate-200 shadow-sm focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/20 transition-all overflow-hidden">
-                        <div className="w-16 bg-slate-50 py-3 flex items-center justify-center border-r border-slate-100">
+                    <div className="space-y-4">
+                      <div className="flex items-stretch bg-white rounded-xl border border-slate-200 shadow-sm focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/20 transition-all overflow-hidden">
+                        <div className="w-16 bg-slate-50 flex items-center justify-center border-r border-slate-100 shrink-0">
                           <span className="font-bold text-slate-600 text-sm">가로</span>
                         </div>
-                        <input type="number" value={width} onChange={e => setWidth(e.target.value)} placeholder="0.0" className="flex-1 text-right text-xl p-3 outline-none font-black text-slate-800 bg-transparent" />
-                        <span className="w-10 text-center font-bold text-slate-400">m</span>
+                        <input type="number" value={width} onChange={e => setWidth(e.target.value)} placeholder="0.0" className="w-full min-w-0 flex-1 text-center text-xl py-3 outline-none font-black text-slate-800 bg-transparent placeholder:text-slate-200" />
+                        <div className="w-12 bg-slate-50 flex items-center justify-center border-l border-slate-100 shrink-0">
+                          <span className="font-bold text-slate-400 text-sm">m</span>
+                        </div>
                       </div>
-                      <div className="flex items-center bg-white rounded-xl border border-slate-200 shadow-sm focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/20 transition-all overflow-hidden">
-                        <div className="w-16 bg-slate-50 py-3 flex items-center justify-center border-r border-slate-100">
+                      <div className="flex items-stretch bg-white rounded-xl border border-slate-200 shadow-sm focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/20 transition-all overflow-hidden">
+                        <div className="w-16 bg-slate-50 flex items-center justify-center border-r border-slate-100 shrink-0">
                           <span className="font-bold text-slate-600 text-sm">세로</span>
                         </div>
-                        <input type="number" value={length} onChange={e => setLength(e.target.value)} placeholder="0.0" className="flex-1 text-right text-xl p-3 outline-none font-black text-slate-800 bg-transparent" />
-                        <span className="w-10 text-center font-bold text-slate-400">m</span>
+                        <input type="number" value={length} onChange={e => setLength(e.target.value)} placeholder="0.0" className="w-full min-w-0 flex-1 text-center text-xl py-3 outline-none font-black text-slate-800 bg-transparent placeholder:text-slate-200" />
+                        <div className="w-12 bg-slate-50 flex items-center justify-center border-l border-slate-100 shrink-0">
+                          <span className="font-bold text-slate-400 text-sm">m</span>
+                        </div>
                       </div>
-                      <div className="flex items-center bg-white rounded-xl border border-slate-200 shadow-sm focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/20 transition-all overflow-hidden">
-                        <div className="w-16 bg-slate-50 py-3 flex items-center justify-center border-r border-slate-100">
+                      <div className="flex items-stretch bg-white rounded-xl border border-slate-200 shadow-sm focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/20 transition-all overflow-hidden">
+                        <div className="w-16 bg-slate-50 flex items-center justify-center border-r border-slate-100 shrink-0">
                           <span className="font-bold text-slate-600 text-sm">높이</span>
                         </div>
-                        <input type="number" value={height} onChange={e => setHeight(e.target.value)} placeholder="0.0" className="flex-1 text-right text-xl p-3 outline-none font-black text-slate-800 bg-transparent" />
-                        <span className="w-10 text-center font-bold text-slate-400">m</span>
+                        <input type="number" value={height} onChange={e => setHeight(e.target.value)} placeholder="0.0" className="w-full min-w-0 flex-1 text-center text-xl py-3 outline-none font-black text-slate-800 bg-transparent placeholder:text-slate-200" />
+                        <div className="w-12 bg-slate-50 flex items-center justify-center border-l border-slate-100 shrink-0">
+                          <span className="font-bold text-slate-400 text-sm">m</span>
+                        </div>
                       </div>
-                    </>
+                    </div>
                   ) : shape === 'cyl' ? (
-                    <>
-                      <div className="flex items-center bg-white rounded-xl border border-slate-200 shadow-sm focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/20 transition-all overflow-hidden">
-                        <div className="w-16 bg-slate-50 py-3 flex items-center justify-center border-r border-slate-100">
+                    <div className="space-y-4">
+                      <div className="flex items-stretch bg-white rounded-xl border border-slate-200 shadow-sm focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/20 transition-all overflow-hidden">
+                        <div className="w-16 bg-slate-50 flex items-center justify-center border-r border-slate-100 shrink-0">
                           <span className="font-bold text-slate-600 text-sm">지름</span>
                         </div>
-                        <input type="number" value={diameter} onChange={e => setDiameter(e.target.value)} placeholder="0.0" className="flex-1 text-right text-xl p-3 outline-none font-black text-slate-800 bg-transparent" />
-                        <span className="w-10 text-center font-bold text-slate-400">m</span>
+                        <input type="number" value={diameter} onChange={e => setDiameter(e.target.value)} placeholder="0.0" className="w-full min-w-0 flex-1 text-center text-xl py-3 outline-none font-black text-slate-800 bg-transparent placeholder:text-slate-200" />
+                        <div className="w-12 bg-slate-50 flex items-center justify-center border-l border-slate-100 shrink-0">
+                          <span className="font-bold text-slate-400 text-sm">m</span>
+                        </div>
                       </div>
-                      <div className="flex items-center bg-white rounded-xl border border-slate-200 shadow-sm focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/20 transition-all overflow-hidden">
-                        <div className="w-16 bg-slate-50 py-3 flex items-center justify-center border-r border-slate-100">
+                      <div className="flex items-stretch bg-white rounded-xl border border-slate-200 shadow-sm focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/20 transition-all overflow-hidden">
+                        <div className="w-16 bg-slate-50 flex items-center justify-center border-r border-slate-100 shrink-0">
                           <span className="font-bold text-slate-600 text-sm">높이</span>
                         </div>
-                        <input type="number" value={height} onChange={e => setHeight(e.target.value)} placeholder="0.0" className="flex-1 text-right text-xl p-3 outline-none font-black text-slate-800 bg-transparent" />
-                        <span className="w-10 text-center font-bold text-slate-400">m</span>
+                        <input type="number" value={height} onChange={e => setHeight(e.target.value)} placeholder="0.0" className="w-full min-w-0 flex-1 text-center text-xl py-3 outline-none font-black text-slate-800 bg-transparent placeholder:text-slate-200" />
+                        <div className="w-12 bg-slate-50 flex items-center justify-center border-l border-slate-100 shrink-0">
+                          <span className="font-bold text-slate-400 text-sm">m</span>
+                        </div>
                       </div>
-                    </>
+                    </div>
                   ) : (
                     <div className="space-y-6">
-                      <div className="space-y-3">
+                      <div className="space-y-4">
                         <h4 className="font-bold text-slate-700 text-sm ml-1 flex items-center gap-2">
                           <span className="w-1.5 h-1.5 rounded-full bg-blue-500"></span>직사각형 부분
                         </h4>
-                        <div className="flex items-center bg-white rounded-xl border border-slate-200 shadow-sm focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/20 transition-all overflow-hidden">
-                          <div className="w-16 bg-slate-50 py-3 flex items-center justify-center border-r border-slate-100">
+                        <div className="flex items-stretch bg-white rounded-xl border border-slate-200 shadow-sm focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/20 transition-all overflow-hidden">
+                          <div className="w-16 bg-slate-50 flex items-center justify-center border-r border-slate-100 shrink-0">
                             <span className="font-bold text-slate-600 text-sm">가로</span>
                           </div>
-                          <input type="number" value={comboRectWidth} onChange={e => setComboRectWidth(e.target.value)} placeholder="0.0" className="flex-1 text-right text-xl p-3 outline-none font-black text-slate-800 bg-transparent" />
-                          <span className="w-10 text-center font-bold text-slate-400">m</span>
+                          <input type="number" value={comboRectWidth} onChange={e => setComboRectWidth(e.target.value)} placeholder="0.0" className="w-full min-w-0 flex-1 text-center text-xl py-3 outline-none font-black text-slate-800 bg-transparent placeholder:text-slate-200" />
+                          <div className="w-12 bg-slate-50 flex items-center justify-center border-l border-slate-100 shrink-0">
+                            <span className="font-bold text-slate-400 text-sm">m</span>
+                          </div>
                         </div>
-                        <div className="flex items-center bg-white rounded-xl border border-slate-200 shadow-sm focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/20 transition-all overflow-hidden">
-                          <div className="w-16 bg-slate-50 py-3 flex items-center justify-center border-r border-slate-100">
+                        <div className="flex items-stretch bg-white rounded-xl border border-slate-200 shadow-sm focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/20 transition-all overflow-hidden">
+                          <div className="w-16 bg-slate-50 flex items-center justify-center border-r border-slate-100 shrink-0">
                             <span className="font-bold text-slate-600 text-sm">세로</span>
                           </div>
-                          <input type="number" value={comboRectLength} onChange={e => setComboRectLength(e.target.value)} placeholder="0.0" className="flex-1 text-right text-xl p-3 outline-none font-black text-slate-800 bg-transparent" />
-                          <span className="w-10 text-center font-bold text-slate-400">m</span>
+                          <input type="number" value={comboRectLength} onChange={e => setComboRectLength(e.target.value)} placeholder="0.0" className="w-full min-w-0 flex-1 text-center text-xl py-3 outline-none font-black text-slate-800 bg-transparent placeholder:text-slate-200" />
+                          <div className="w-12 bg-slate-50 flex items-center justify-center border-l border-slate-100 shrink-0">
+                            <span className="font-bold text-slate-400 text-sm">m</span>
+                          </div>
                         </div>
-                        <div className="flex items-center bg-white rounded-xl border border-slate-200 shadow-sm focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/20 transition-all overflow-hidden">
-                          <div className="w-16 bg-slate-50 py-3 flex items-center justify-center border-r border-slate-100">
+                        <div className="flex items-stretch bg-white rounded-xl border border-slate-200 shadow-sm focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/20 transition-all overflow-hidden">
+                          <div className="w-16 bg-slate-50 flex items-center justify-center border-r border-slate-100 shrink-0">
                             <span className="font-bold text-slate-600 text-sm">높이</span>
                           </div>
-                          <input type="number" value={comboRectHeight} onChange={e => setComboRectHeight(e.target.value)} placeholder="0.0" className="flex-1 text-right text-xl p-3 outline-none font-black text-slate-800 bg-transparent" />
-                          <span className="w-10 text-center font-bold text-slate-400">m</span>
+                          <input type="number" value={comboRectHeight} onChange={e => setComboRectHeight(e.target.value)} placeholder="0.0" className="w-full min-w-0 flex-1 text-center text-xl py-3 outline-none font-black text-slate-800 bg-transparent placeholder:text-slate-200" />
+                          <div className="w-12 bg-slate-50 flex items-center justify-center border-l border-slate-100 shrink-0">
+                            <span className="font-bold text-slate-400 text-sm">m</span>
+                          </div>
                         </div>
                       </div>
                       
-                      <div className="space-y-3">
+                      <div className="space-y-4">
                         <h4 className="font-bold text-slate-700 text-sm ml-1 flex items-center gap-2">
                           <span className="w-1.5 h-1.5 rounded-full bg-cyan-500"></span>원통형 부분
                         </h4>
-                        <div className="flex items-center bg-white rounded-xl border border-slate-200 shadow-sm focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/20 transition-all overflow-hidden">
-                          <div className="w-16 bg-slate-50 py-3 flex items-center justify-center border-r border-slate-100">
+                        <div className="flex items-stretch bg-white rounded-xl border border-slate-200 shadow-sm focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/20 transition-all overflow-hidden">
+                          <div className="w-16 bg-slate-50 flex items-center justify-center border-r border-slate-100 shrink-0">
                             <span className="font-bold text-slate-600 text-sm">지름</span>
                           </div>
-                          <input type="number" value={comboCylDiameter} onChange={e => setComboCylDiameter(e.target.value)} placeholder="0.0" className="flex-1 text-right text-xl p-3 outline-none font-black text-slate-800 bg-transparent" />
-                          <span className="w-10 text-center font-bold text-slate-400">m</span>
+                          <input type="number" value={comboCylDiameter} onChange={e => setComboCylDiameter(e.target.value)} placeholder="0.0" className="w-full min-w-0 flex-1 text-center text-xl py-3 outline-none font-black text-slate-800 bg-transparent placeholder:text-slate-200" />
+                          <div className="w-12 bg-slate-50 flex items-center justify-center border-l border-slate-100 shrink-0">
+                            <span className="font-bold text-slate-400 text-sm">m</span>
+                          </div>
                         </div>
-                        <div className="flex items-center bg-white rounded-xl border border-slate-200 shadow-sm focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/20 transition-all overflow-hidden">
-                          <div className="w-16 bg-slate-50 py-3 flex items-center justify-center border-r border-slate-100">
+                        <div className="flex items-stretch bg-white rounded-xl border border-slate-200 shadow-sm focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/20 transition-all overflow-hidden">
+                          <div className="w-16 bg-slate-50 flex items-center justify-center border-r border-slate-100 shrink-0">
                             <span className="font-bold text-slate-600 text-sm">높이</span>
                           </div>
-                          <input type="number" value={comboCylHeight} onChange={e => setComboCylHeight(e.target.value)} placeholder="0.0" className="flex-1 text-right text-xl p-3 outline-none font-black text-slate-800 bg-transparent" />
-                          <span className="w-10 text-center font-bold text-slate-400">m</span>
+                          <input type="number" value={comboCylHeight} onChange={e => setComboCylHeight(e.target.value)} placeholder="0.0" className="w-full min-w-0 flex-1 text-center text-xl py-3 outline-none font-black text-slate-800 bg-transparent placeholder:text-slate-200" />
+                          <div className="w-12 bg-slate-50 flex items-center justify-center border-l border-slate-100 shrink-0">
+                            <span className="font-bold text-slate-400 text-sm">m</span>
+                          </div>
                         </div>
                       </div>
                     </div>
                   )}
                 </div>
 
-                <div className="mt-8 bg-slate-50 rounded-2xl p-5 border border-slate-100 flex justify-between items-center shadow-inner shrink-0">
+                <div className="mt-6 bg-slate-50 rounded-2xl p-5 border border-slate-100 flex justify-between items-center shadow-inner shrink-0">
                   <span className="text-slate-500 font-bold text-sm">총 체적(m³)</span>
                   <span className="text-3xl font-black text-blue-600">
                     {volume > 0 ? volume.toFixed(2) : '0.00'}
@@ -633,7 +653,7 @@
               </div>
             )}
 
-            { }
+            {}
             {step === 7 && (
               <div className="flex-1 flex flex-col bg-[#F8FAFC] animate-in zoom-in-95 duration-500 ease-out overflow-y-auto custom-scrollbar">
                 
