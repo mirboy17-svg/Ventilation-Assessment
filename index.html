@@ -17,7 +17,7 @@
   <script>
     var iconFileName = "image_bf5001.png"; 
     
-    // 동적으로 manifest 생성 및 적용
+    // 동적으로 manifest 생성 및 DOM에 안전하게 추가 (설치 팝업 인식률 극대화)
     var manifestData = {
       "name": "밀폐공간 환기계산",
       "short_name": "환기계산",
@@ -40,16 +40,26 @@
     };
     var manifestBlob = new Blob([JSON.stringify(manifestData)], {type: 'application/json'});
     var manifestUrl = URL.createObjectURL(manifestBlob);
-    document.write('<link rel="manifest" href="' + manifestUrl + '">');
-    document.write('<link rel="apple-touch-icon" href="' + iconFileName + '">');
+    
+    var manifestLink = document.createElement('link');
+    manifestLink.rel = 'manifest';
+    manifestLink.href = manifestUrl;
+    document.head.appendChild(manifestLink);
 
-    // 💡 안드로이드 자동 설치 팝업 조건을 만족시키기 위한 가상 Service Worker 등록
-    if ('serviceWorker' in navigator) {
-      var swCode = "self.addEventListener('fetch', function(e) {});";
-      var swBlob = new Blob([swCode], {type: 'application/javascript'});
-      var swUrl = URL.createObjectURL(swBlob);
-      navigator.serviceWorker.register(swUrl).catch(function(err){ console.log(err); });
-    }
+    var appleTouchIcon = document.createElement('link');
+    appleTouchIcon.rel = 'apple-touch-icon';
+    appleTouchIcon.href = iconFileName;
+    document.head.appendChild(appleTouchIcon);
+
+    // 💡 안드로이드 자동 설치 팝업 조건을 만족시키기 위한 가상 Service Worker 안정적 등록
+    window.addEventListener('load', function() {
+      if ('serviceWorker' in navigator) {
+        var swCode = "self.addEventListener('fetch', function(e) {});";
+        var swBlob = new Blob([swCode], {type: 'application/javascript'});
+        var swUrl = URL.createObjectURL(swBlob);
+        navigator.serviceWorker.register(swUrl).catch(function(err){ console.log(err); });
+      }
+    });
   </script>
 
   <!-- Tailwind CSS -->
