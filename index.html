@@ -214,16 +214,24 @@
 
       useEffect(() => {
         const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone || document.referrer.includes('android-app://');
-        const hasDismissed = localStorage.getItem('dismissedInstallPrompt');
+        
+        // 30분 쿨타임 체크
+        const hideUntil = localStorage.getItem('hideInstallPromptUntil');
+        const now = new Date().getTime();
 
-        if (!isStandalone && !hasDismissed) {
-          setShowInstallBanner(true);
+        if (!isStandalone) {
+          // 숨김 기한 기록이 없거나, 현재 시간이 숨김 기한(30분)을 지났을 경우 팝업 표시
+          if (!hideUntil || now > parseInt(hideUntil, 10)) {
+            setShowInstallBanner(true);
+          }
         }
       }, []);
 
       const dismissInstall = () => {
         setShowInstallBanner(false);
-        localStorage.setItem('dismissedInstallPrompt', 'true');
+        // '나중에' 버튼 클릭 시, 현재 시간 기준 30분(30 * 60 * 1000 ms) 이후의 시간을 로컬스토리지에 저장
+        const hideUntil = new Date().getTime() + 30 * 60 * 1000;
+        localStorage.setItem('hideInstallPromptUntil', hideUntil);
       };
 
       const nextStep = () => setStep((s) => s + 1);
