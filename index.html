@@ -13,9 +13,12 @@
     }
   </script>
 
-  <!-- PWA 아이콘 변수 설정 -->
+  <!-- PWA 아이콘 변수 설정 (이미지 파일명 변경 시 여기만 수정하세요) -->
   <script>
+    // png 대신 벡터 파일인 svg로 변경 적용
     var iconFileName = "image_bf5001.svg"; 
+    
+    // 안정적인 Data URI 방식으로 Manifest 생성 (모바일 브라우저 차단 방지)
     var manifestData = {
       "name": "맨홀공간 환기계산",
       "short_name": "환기계산",
@@ -36,12 +39,16 @@
         }
       ]
     };
+    
+    // JSON 데이터를 URL 형태로 변환하여 직접 삽입
     var manifestStr = JSON.stringify(manifestData);
     var manifestDataUrl = "data:application/json;charset=utf-8," + encodeURIComponent(manifestStr);
+    
     var manifestLink = document.createElement('link');
     manifestLink.rel = 'manifest';
     manifestLink.href = manifestDataUrl;
     document.head.appendChild(manifestLink);
+
     var appleTouchIcon = document.createElement('link');
     appleTouchIcon.rel = 'apple-touch-icon';
     appleTouchIcon.href = iconFileName;
@@ -50,35 +57,55 @@
 
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- React & ReactDOM -->
+
+  <!-- React & ReactDOM (UMD 빌드) -->
   <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
   <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
-  <!-- Babel -->
+  
+  <!-- Babel for parsing JSX in browser -->
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-  <!-- html2canvas & jsPDF -->
+
+  <!-- html2canvas (결과 이미지 캡처용 라이브러리) -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
   <!-- 강력한 보안 및 안티 디버깅 스크립트 -->
   <script>
-    document.addEventListener('contextmenu', function(e) { e.preventDefault(); });
+    // 1. 마우스 우클릭 방지
+    document.addEventListener('contextmenu', function(e) {
+      e.preventDefault();
+    });
+
+    // 2. 키보드 단축키 방지 (F12, Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+U 등)
     document.addEventListener('keydown', function(e) {
-      if (e.keyCode === 123 || (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74)) || (e.ctrlKey && (e.keyCode === 85 || e.keyCode === 83))) {
-        e.preventDefault(); e.returnValue = false;
+      if (
+        e.keyCode === 123 || // F12
+        (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74)) || // Ctrl+Shift+I/J
+        (e.ctrlKey && (e.keyCode === 85 || e.keyCode === 83)) // Ctrl+U(소스보기), Ctrl+S(저장)
+      ) {
+        e.preventDefault();
+        e.returnValue = false;
       }
     });
+
+    // 3. 안티 디버깅 (Sources 탭 강제 마비 및 코드 은닉)
+    // 개발자 도구가 열리면 무한 루프에 빠지게 하여 Sources 탭 분석을 원천적으로 방해합니다.
     setInterval(function() {
       var before = new Date().getTime();
       (function() { return false; }['constructor']('debugger')());
       var after = new Date().getTime();
+      
+      // 디버거가 멈춰서 시간이 지연된 경우 = 개발자 도구가 열려있음
       if (after - before > 100) {
-        document.body.innerHTML = '<div style="display:flex; justify-content:center; align-items:center; height:100vh; background:#f8fafc; color:#0f172a; font-size:1.2rem; font-weight:bold;">보안 정책에 의해 개발자 도구를 사용할 수 없습니다.</div>';
+        // 화면을 즉시 하얗게 지워버리거나 경고 메시지 출력
+        document.body.innerHTML = '<div style="display:flex; justify-content:center; align-items:center; height:100vh; background:#f8fafc; color:#0f172a; font-size:1.2rem; font-weight:bold; font-family:sans-serif;">보안 정책에 의해 개발자 도구를 사용할 수 없습니다.</div>';
       }
     }, 50);
+
+    // 4. 콘솔(Console) 기록 지우기
     setInterval(function() {
       console.clear();
       console.log("%c경고!", "color: red; font-size: 50px; font-weight: bold;");
-      console.log("%c이곳은 개발자 전용 공간입니다.", "color: #333; font-size: 16px;");
+      console.log("%c이곳은 개발자 전용 공간입니다. 보안 정책에 의해 모든 기능이 차단됩니다.", "color: #333; font-size: 16px;");
     }, 1000);
   </script>
 
@@ -100,21 +127,17 @@
 
     function App() {
       const [step, setStep] = useState(1);
-      
-      const [formData, setFormData] = useState({
-        receiver: '', sender: '', companyName: '', representative: '',
-        location: '', client: '', contact: '', workDate: '',
-        workContent: '', otherInfo: '', remarks: '', inspector: ''
-      });
-      const formRef = useRef(null);
-      const pdfTemplateRef = useRef(null);
-
       const [fanCapacity, setFanCapacity] = useState('');
       const [shape, setShape] = useState('');
+      
+      const [showInstallBanner, setShowInstallBanner] = useState(false);
+      const [showInstallInstructions, setShowInstallInstructions] = useState(false);
+
       const [width, setWidth] = useState('');
       const [length, setLength] = useState('');
       const [diameter, setDiameter] = useState('');
       const [height, setHeight] = useState('');
+
       const [comboRectWidth, setComboRectWidth] = useState('');
       const [comboRectLength, setComboRectLength] = useState('');
       const [comboRectHeight, setComboRectHeight] = useState('');
@@ -125,31 +148,32 @@
       const [q2, setQ2] = useState(null);
       const [q3, setQ3] = useState(null);
       const [q4, setQ4] = useState(null);
-      const [q5, setQ5] = useState(null);
-      const [q6, setQ6] = useState(null);
-      const [q7, setQ7] = useState(null);
 
-      const [showInstallBanner, setShowInstallBanner] = useState(false);
-      const [showInstallInstructions, setShowInstallInstructions] = useState(false);
       const [deferredPrompt, setDeferredPrompt] = useState(null);
-      const resultRef = useRef(null);
 
-      const handleInputChange = (e) => {
-        const { name, value } = e.target;
-        setFormData(prev => ({ ...prev, [name]: value }));
-      };
+      const resultRef = useRef(null);
 
       const getVolume = () => {
         if (shape === 'rect') {
-          const w = parseFloat(width) || 0; const l = parseFloat(length) || 0; const h = parseFloat(height) || 0;
+          const w = parseFloat(width) || 0;
+          const l = parseFloat(length) || 0;
+          const h = parseFloat(height) || 0;
           return w * l * h;
         } else if (shape === 'cyl') {
-          const d = parseFloat(diameter) || 0; const h = parseFloat(height) || 0;
+          const d = parseFloat(diameter) || 0;
+          const h = parseFloat(height) || 0;
           return (3.14 * Math.pow(d, 2) / 4) * h;
         } else if (shape === 'combo') {
-          const rw = parseFloat(comboRectWidth) || 0; const rl = parseFloat(comboRectLength) || 0; const rh = parseFloat(comboRectHeight) || 0;
-          const cd = parseFloat(comboCylDiameter) || 0; const ch = parseFloat(comboCylHeight) || 0;
-          return (rw * rl * rh) + ((3.14 * Math.pow(cd, 2) / 4) * ch);
+          const rw = parseFloat(comboRectWidth) || 0;
+          const rl = parseFloat(comboRectLength) || 0;
+          const rh = parseFloat(comboRectHeight) || 0;
+          const v1 = rw * rl * rh;
+          
+          const cd = parseFloat(comboCylDiameter) || 0;
+          const ch = parseFloat(comboCylHeight) || 0;
+          const v2 = (3.14 * Math.pow(cd, 2) / 4) * ch;
+          
+          return v1 + v2;
         }
         return 0;
       };
@@ -157,11 +181,15 @@
       const volume = getVolume();
       const fanHr = parseFloat(fanCapacity) || 0;
       const reqTotalFanCapacityHr = volume * 24; 
-      const rawFanCount = fanHr > 0 ? reqTotalFanCapacityHr / (fanHr * 0.8) : 0;
       
+      const rawFanCount = fanHr > 0 ? reqTotalFanCapacityHr / (fanHr * 0.8) : 0;
       let displayFanCount = "0대";
       if (rawFanCount > 0) {
-        displayFanCount = rawFanCount <= 1 ? "1대 이하" : rawFanCount.toFixed(1) + "대 이상";
+        if (rawFanCount <= 1) {
+          displayFanCount = "1대 이하";
+        } else {
+          displayFanCount = rawFanCount.toFixed(1) + "대 이상";
+        }
       }
 
       const actualFanCount = Math.ceil(rawFanCount > 0 ? rawFanCount : 0);
@@ -170,85 +198,79 @@
       const ventTime = Math.max(Math.ceil(rawVentTime), 30); 
       const isMinimumForced = Math.ceil(rawVentTime) < 30 && effectiveAirflowMin > 0;
 
-      const saveAsPDF = () => {
-        if (!pdfTemplateRef.current) return;
-        if (!window.html2canvas || !window.jspdf) {
-          alert('PDF 기능을 불러오는 중입니다. 잠시 후 시도해주세요.'); return;
-        }
-        const { jsPDF } = window.jspdf;
-        pdfTemplateRef.current.style.display = 'block';
-
-        window.html2canvas(pdfTemplateRef.current, { scale: 2, backgroundColor: '#FFFFFF', useCORS: true })
-        .then(canvas => {
-          pdfTemplateRef.current.style.display = 'none';
-          const imgData = canvas.toDataURL('image/jpeg', 1.0);
-          const pdf = new jsPDF('p', 'mm', 'a4');
-          const pdfWidth = pdf.internal.pageSize.getWidth();
-          const imgWidth = canvas.width;
-          const imgHeight = canvas.height;
-          const ratio = pdfWidth / imgWidth;
-          const finalHeight = imgHeight * ratio;
-          pdf.addImage(imgData, 'JPEG', 0, 15, pdfWidth, finalHeight);
-          const date = new Date();
-          const dateStr = `${date.getFullYear().toString().slice(-2)}${(date.getMonth()+1).toString().padStart(2,'0')}${date.getDate().toString().padStart(2,'0')}`;
-          pdf.save(`맨홀작업일정_사전송부_${dateStr}.pdf`);
-        }).catch(err => {
-          pdfTemplateRef.current.style.display = 'none';
-          alert('PDF 저장 중 오류가 발생했습니다.');
-        });
-      };
-
-      // 동영상 촬영가이드 다운로드 기능 (이미지 직접 다운로드로 변경 - 오류 방지)
-      const downloadGuideImage = () => {
-        try {
-          const link = document.createElement('a');
-          link.href = '동영상촬영가이드.jpg'; // 서버에 업로드된 원본 이미지 파일명
-          link.download = '맨홀작업_안전조치_동영상_촬영가이드.jpg'; // 다운로드될 때의 파일명
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-        } catch (error) {
-          alert('다운로드 중 오류가 발생했습니다. 브라우저 설정이나 파일 경로를 확인해주세요.');
-        }
-      };
-
       const saveAsImage = () => {
         if (!resultRef.current) return;
-        window.html2canvas(resultRef.current, { scale: 1.5, backgroundColor: '#F8FAFC' }).then(canvas => {
+        
+        if (!window.html2canvas) {
+          alert('이미지 저장 기능을 불러오는 중입니다. 잠시 후 다시 시도해주세요.');
+          return;
+        }
+
+        window.html2canvas(resultRef.current, {
+          scale: 1.5, 
+          backgroundColor: '#F8FAFC', 
+        }).then(canvas => {
+          const imgData = canvas.toDataURL('image/jpeg', 0.7);
           const link = document.createElement('a');
-          link.download = `환기계산결과_${new Date().getTime()}.jpg`;
-          link.href = canvas.toDataURL('image/jpeg', 0.7);
+          
+          const date = new Date();
+          const dateStr = `${date.getFullYear().toString().slice(-2)}${(date.getMonth()+1).toString().padStart(2,'0')}${date.getDate().toString().padStart(2,'0')}_${date.getHours().toString().padStart(2,'0')}${date.getMinutes().toString().padStart(2,'0')}`;
+          
+          link.download = `밀폐공간_환기계산결과_${dateStr}.jpg`;
+          link.href = imgData;
           link.click();
+        }).catch(err => {
+          console.error('이미지 저장 오류:', err);
+          alert('이미지 저장 중 오류가 발생했습니다.');
         });
       };
 
       useEffect(() => {
-        const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+        const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone || document.referrer.includes('android-app://');
+        
+        // 30분 쿨타임 체크
         const hideUntil = localStorage.getItem('hideInstallPromptUntil');
         const now = new Date().getTime();
 
-        if (!isStandalone && (!hideUntil || now > parseInt(hideUntil, 10))) {
-          setShowInstallBanner(true);
+        if (!isStandalone) {
+          // 숨김 기한 기록이 없거나, 현재 시간이 숨김 기한(30분)을 지났을 경우 팝업 표시
+          if (!hideUntil || now > parseInt(hideUntil, 10)) {
+            setShowInstallBanner(true);
+          }
         }
 
-        const handleBeforeInstallPrompt = (e) => { e.preventDefault(); setDeferredPrompt(e); };
+        // 안드로이드 기본 앱 설치 팝업 이벤트 가로채기
+        const handleBeforeInstallPrompt = (e) => {
+          e.preventDefault();
+          setDeferredPrompt(e);
+        };
         window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-        return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+
+        return () => {
+          window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+        };
       }, []);
 
       const dismissInstall = () => {
         setShowInstallBanner(false);
-        localStorage.setItem('hideInstallPromptUntil', new Date().getTime() + 30 * 60 * 1000);
+        // '나중에' 버튼 클릭 시, 현재 시간 기준 30분(30 * 60 * 1000 ms) 이후의 시간을 로컬스토리지에 저장
+        const hideUntil = new Date().getTime() + 30 * 60 * 1000;
+        localStorage.setItem('hideInstallPromptUntil', hideUntil);
       };
 
       const handleInstallClick = async () => {
         if (deferredPrompt) {
+          // 안드로이드: 브라우저가 제공하는 시스템 기본 "앱 설치" 팝업 강제 실행
           deferredPrompt.prompt();
           const { outcome } = await deferredPrompt.userChoice;
-          if (outcome === 'accepted') setShowInstallBanner(false);
+          if (outcome === 'accepted') {
+            setShowInstallBanner(false);
+          }
           setDeferredPrompt(null);
         } else {
-          setShowInstallBanner(false); setShowInstallInstructions(true);
+          // 아이폰(iOS)이거나 API를 지원하지 않는 브라우저: 수동 설치 안내 모달 표시
+          setShowInstallBanner(false);
+          setShowInstallInstructions(true);
         }
       };
 
@@ -256,495 +278,556 @@
       const prevStep = () => setStep((s) => s - 1);
       const reset = () => {
         setStep(1);
-        setFormData({ receiver: '', sender: '', companyName: '', representative: '', location: '', client: '', contact: '', workDate: '', workContent: '', otherInfo: '', remarks: '', inspector: '' });
-        setFanCapacity(''); setShape(''); setWidth(''); setLength(''); setHeight(''); setDiameter('');
-        setComboRectWidth(''); setComboRectLength(''); setComboRectHeight(''); setComboCylDiameter(''); setComboCylHeight('');
-        setQ1(null); setQ2(null); setQ3(null); setQ4(null); setQ5(null); setQ6(null); setQ7(null);
+        setFanCapacity('');
+        setShape('');
+        setWidth('');
+        setLength('');
+        setHeight('');
+        setDiameter('');
+        setComboRectWidth('');
+        setComboRectLength('');
+        setComboRectHeight('');
+        setComboCylDiameter('');
+        setComboCylHeight('');
+        setQ1(null);
+        setQ2(null);
+        setQ3(null);
+        setQ4(null);
       };
 
       return (
         <div className="min-h-screen bg-[#F4F7FB] flex justify-center font-sans text-slate-800 selection:bg-blue-200 sm:p-4">
           <div className="w-full max-w-md bg-white sm:rounded-[2.5rem] sm:shadow-[0_20px_60px_-15px_rgba(0,0,0,0.08)] min-h-[100dvh] sm:min-h-[850px] flex flex-col relative overflow-hidden sm:border border-slate-100/50">
             
-            {/* 진행률 헤더 (1페이지 제외) */}
-            {step > 1 && step <= 9 && (
+            {/* Header with Back Button */}
+            {step > 1 && step <= 7 && (
               <header className="px-6 py-5 flex items-center bg-white/80 backdrop-blur-md sticky top-0 z-20 border-b border-slate-100/80">
-                <button onClick={prevStep} className="p-2 -ml-2 rounded-full hover:bg-slate-50 text-slate-600 transition-colors active:scale-95">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" /></svg>
+                <button 
+                  onClick={prevStep} 
+                  className="p-2 -ml-2 rounded-full hover:bg-slate-50 text-slate-600 transition-colors active:scale-95"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
+                  </svg>
                 </button>
                 <div className="w-full bg-slate-100 h-1.5 rounded-full ml-4 overflow-hidden">
-                  <div className="bg-blue-600 h-full rounded-full transition-all duration-500 ease-out" style={{ width: `${((step - 1) / 8) * 100}%` }}></div>
+                  <div 
+                    className="bg-blue-600 h-full rounded-full transition-all duration-500 ease-out"
+                    style={{ width: `${((step - 1) / 6) * 100}%` }}
+                  ></div>
                 </div>
-                <span className="ml-3 text-xs font-bold text-slate-400 whitespace-nowrap">{step - 1} / 8</span>
+                <span className="ml-3 text-xs font-bold text-slate-400 whitespace-nowrap">{step - 1} / 6</span>
               </header>
             )}
 
             {/* Step 1: 메인 화면 */}
             {step === 1 && (
               <div className="flex flex-col flex-1 pb-6 pt-10 animate-in fade-in duration-700 ease-out h-full max-h-[100dvh] relative">
+
                 <div className="text-center w-full space-y-3 px-6 mb-6 shrink-0 mt-4">
                   <span className="inline-block py-1.5 px-4 rounded-full bg-blue-50 text-blue-600 text-xs font-bold tracking-wide mb-1">
                     안전보건공단 KOSHA GUIDE 기준
                   </span>
                   <h1 className="text-[2.2rem] font-extrabold text-slate-900 tracking-tight leading-tight">
-                    맨홀작업 안전조치 <br/>
-                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-500">맨홀지킴이</span>
+                    맨홀지킴이 환기 <br/>
+                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-500">
+                      위험성평가
+                    </span>
                   </h1>
                   <p className="text-slate-500 text-sm mt-3 font-medium px-4">
                     작업 전 필수적인 위험성평가와 적정 환기량을 빠르고 정확하게 산출합니다.
                   </p>
                 </div>
+
                 <div className="w-full relative shrink-0">
                   <div className="w-full aspect-[4/3] relative overflow-hidden bg-white shadow-sm border-y border-slate-100">
-                    <img src="image_bf5001.svg" alt="환기 예시 아이콘" className="absolute inset-0 w-full h-full object-contain p-8" />
+                    <img 
+                      src="image_bf5001.png" 
+                      alt="밀폐공간 환기 예시" 
+                      className="absolute inset-0 w-full h-full object-contain"
+                    />
                   </div>
                 </div>
+
                 <div className="px-6 flex-1 flex flex-col justify-center my-auto w-full max-w-sm mx-auto min-h-[100px]">
-                  <button onClick={nextStep} className="w-full bg-slate-900 hover:bg-blue-600 text-white font-bold py-[1.15rem] rounded-2xl shadow-xl hover:shadow-blue-500/25 active:scale-[0.98] transition-all duration-300 text-lg">
-                    사전송부 및 평가 시작
+                  <button 
+                    onClick={nextStep} 
+                    className="w-full bg-slate-900 hover:bg-blue-600 text-white font-bold py-[1.15rem] rounded-2xl shadow-xl hover:shadow-blue-500/25 active:scale-[0.98] transition-all duration-300 text-lg"
+                  >
+                    시작하기
                   </button>
                 </div>
+
                 <div className="w-full shrink-0 flex flex-col items-center justify-end opacity-90 px-6 pb-4">
                   <img src="image_bfaefe.png" alt="하단 로고" className="h-10 sm:h-12 object-contain" />
                 </div>
               </div>
             )}
 
-            {/* Step 2: 맨홀 작업 일정 사전송부 폼 */}
+            {/* Step 2: 체크리스트 */}
             {step === 2 && (
-              <div className="flex-1 flex flex-col animate-in slide-in-from-right-4 duration-500 ease-out bg-[#F8FAFC]">
-                <div ref={formRef} className="p-6 pb-4 bg-white flex-1 overflow-y-auto custom-scrollbar">
-                  <div className="mb-6 text-center border-b-2 border-slate-800 pb-4">
-                    <h2 className="text-2xl font-black text-slate-900 tracking-tight">맨홀 작업 일정 사전송부 서식</h2>
-                  </div>
-                  <div className="space-y-1">
-                    {[
-                      { num: '1', label: '수신자', name: 'receiver', placeholder: '입력하세요' },
-                      { num: '2', label: '발신자', name: 'sender', placeholder: '입력하세요' },
-                      { num: '3', label: '사업장명(현장명)', name: 'companyName', placeholder: '입력하세요' },
-                      { num: '4', label: '대표자(현장책임자)', name: 'representative', placeholder: '입력하세요' },
-                      { num: '5', label: '소재지(맨홀위치)', name: 'location', placeholder: '상세 위치 입력' },
-                      { num: '6', label: '발주자', name: 'client', placeholder: '입력하세요' },
-                      { num: '7', label: '현장 연락처', name: 'contact', placeholder: '핸드폰 등 입력' },
-                    ].map(item => (
-                      <div key={item.name} className="flex items-start border-b border-slate-300 py-3 hover:bg-slate-50/50 transition-colors">
-                        <span className="font-bold text-slate-700 text-[13.5px] w-[145px] shrink-0 mt-0.5">{item.num}. {item.label}</span>
-                        <span className="text-slate-400 mr-2 mt-0.5">:</span>
-                        <textarea name={item.name} value={formData[item.name]} onChange={(e) => { handleInputChange(e); e.target.style.height = 'auto'; e.target.style.height = e.target.scrollHeight + 'px'; }} rows="1" className="flex-1 w-full px-1 py-0.5 outline-none text-[13.5px] font-medium focus:bg-blue-50/50 bg-transparent text-slate-900 resize-none overflow-hidden break-words whitespace-pre-wrap" placeholder={item.placeholder} />
-                      </div>
-                    ))}
-                    <div className="py-2.5 pt-4">
-                      <span className="font-extrabold text-slate-800 text-[14px]">8. 작업정보</span>
+              <div className="p-6 flex-1 flex flex-col animate-in slide-in-from-right-4 duration-500 ease-out">
+                <div className="mb-6 text-center">
+                  <h2 className="text-2xl font-extrabold text-slate-900 mb-2 tracking-tight">맨홀공간 환기 체크리스트</h2>
+                  <p className="text-slate-500 text-sm font-medium leading-relaxed">
+                    안전한 환기계산을 위해 아래 항목들을 꼼꼼히 확인해 주세요.
+                  </p>
+                </div>
+
+                <div className="space-y-4 overflow-y-auto pb-4 custom-scrollbar">
+                  <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm hover:border-blue-100 transition-colors">
+                    <p className="font-bold text-slate-800 mb-4 text-sm leading-snug">
+                      <span className="text-blue-600 mr-1">1.</span> 보유 배풍기 풍량(m³/hr)을 아시나요?
+                    </p>
+                    <div className="flex gap-2">
+                      <button onClick={() => setQ1('yes')} className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all border ${q1 === 'yes' ? 'bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-500/20' : 'bg-slate-50 text-slate-600 border-transparent hover:bg-slate-100'}`}>예</button>
+                      <button onClick={() => setQ1('no')} className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all border ${q1 === 'no' ? 'bg-rose-500 text-white border-rose-500 shadow-md shadow-rose-500/20' : 'bg-slate-50 text-slate-600 border-transparent hover:bg-slate-100'}`}>아니오</button>
                     </div>
-                    {[
-                      { num: '8-1', label: '작업일시', name: 'workDate', placeholder: '예: 2026.08.10 13:00~17:00' },
-                      { num: '8-2', label: '작업내용', name: 'workContent', placeholder: '작업 상세 내용 입력' },
-                      { num: '8-3', label: '기타', name: 'otherInfo', placeholder: '기타 작업정보 입력' }
-                    ].map(item => (
-                      <div key={item.name} className="flex items-start border-b border-slate-200 py-3 ml-4 hover:bg-slate-50/50 transition-colors">
-                        <span className="font-bold text-slate-600 text-[13.5px] w-[129px] shrink-0 mt-0.5">{item.num}. {item.label}</span>
-                        <span className="text-slate-400 mr-2 mt-0.5">:</span>
-                        <textarea name={item.name} value={formData[item.name]} onChange={(e) => { handleInputChange(e); e.target.style.height = 'auto'; e.target.style.height = e.target.scrollHeight + 'px'; }} rows="1" className="flex-1 w-full px-1 py-0.5 outline-none text-[13.5px] font-medium focus:bg-blue-50/50 bg-transparent text-slate-900 resize-none overflow-hidden break-words whitespace-pre-wrap" placeholder={item.placeholder} />
-                      </div>
-                    ))}
-                    {[
-                      { num: '9', label: '특이사항', name: 'remarks', placeholder: '특이사항 입력' },
-                      { num: '10', label: '입회자(담당공무원)', name: 'inspector', placeholder: '입력하세요' }
-                    ].map(item => (
-                      <div key={item.name} className={`flex items-start border-b border-slate-300 py-3 hover:bg-slate-50/50 transition-colors ${item.num === '9' ? 'pt-4' : ''}`}>
-                        <span className="font-bold text-slate-700 text-[13.5px] w-[145px] shrink-0 mt-0.5">{item.num}. {item.label}</span>
-                        <span className="text-slate-400 mr-2 mt-0.5">:</span>
-                        <textarea name={item.name} value={formData[item.name]} onChange={(e) => { handleInputChange(e); e.target.style.height = 'auto'; e.target.style.height = e.target.scrollHeight + 'px'; }} rows="1" className="flex-1 w-full px-1 py-0.5 outline-none text-[13.5px] font-medium focus:bg-blue-50/50 bg-transparent text-slate-900 resize-none overflow-hidden break-words whitespace-pre-wrap" placeholder={item.placeholder} />
-                      </div>
-                    ))}
                   </div>
-                  <div className="mt-6 text-right pr-2 pb-4">
-                    <span className="text-[11px] text-slate-400">※ 본 서식은 맨홀 작업 전 필수 송부용입니다.</span>
+
+                  <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm hover:border-blue-100 transition-colors">
+                    <p className="font-bold text-slate-800 mb-4 text-sm leading-snug">
+                      <span className="text-blue-600 mr-1">2.</span> 보유 배풍기 정압(mmAq)을 아시나요?
+                    </p>
+                    <div className="flex gap-2">
+                      <button onClick={() => setQ2('yes')} className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all border ${q2 === 'yes' ? 'bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-500/20' : 'bg-slate-50 text-slate-600 border-transparent hover:bg-slate-100'}`}>예</button>
+                      <button onClick={() => setQ2('no')} className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all border ${q2 === 'no' ? 'bg-rose-500 text-white border-rose-500 shadow-md shadow-rose-500/20' : 'bg-slate-50 text-slate-600 border-transparent hover:bg-slate-100'}`}>아니오</button>
+                    </div>
+                  </div>
+
+                  <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm hover:border-blue-100 transition-colors">
+                    <p className="font-bold text-slate-800 mb-4 text-sm leading-snug">
+                      <span className="text-blue-600 mr-1">3.</span> 배풍기 덕트 길이는 15m 이하거나 제조사 권장 기준을 준수하셨나요?
+                    </p>
+                    <div className="flex gap-2">
+                      <button onClick={() => setQ3('yes')} className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all border ${q3 === 'yes' ? 'bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-500/20' : 'bg-slate-50 text-slate-600 border-transparent hover:bg-slate-100'}`}>예</button>
+                      <button onClick={() => setQ3('no')} className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all border ${q3 === 'no' ? 'bg-rose-500 text-white border-rose-500 shadow-md shadow-rose-500/20' : 'bg-slate-50 text-slate-600 border-transparent hover:bg-slate-100'}`}>아니오</button>
+                    </div>
+                  </div>
+
+                  <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm hover:border-blue-100 transition-colors">
+                    <p className="font-bold text-slate-800 mb-4 text-sm leading-snug">
+                      <span className="text-blue-600 mr-1">4.</span> 배풍기 덕트 끝부분이 밀폐공간 가장 하단에 위치하고 있나요?
+                    </p>
+                    <div className="flex gap-2">
+                      <button onClick={() => setQ4('yes')} className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all border ${q4 === 'yes' ? 'bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-500/20' : 'bg-slate-50 text-slate-600 border-transparent hover:bg-slate-100'}`}>예</button>
+                      <button onClick={() => setQ4('no')} className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all border ${q4 === 'no' ? 'bg-rose-500 text-white border-rose-500 shadow-md shadow-rose-500/20' : 'bg-slate-50 text-slate-600 border-transparent hover:bg-slate-100'}`}>아니오</button>
+                    </div>
                   </div>
                 </div>
 
-                {/* PDF 렌더링용 히든 템플릿 (표 양식) */}
-                <div style={{ display: 'none', position: 'absolute', left: '-9999px', top: '0', width: '800px', backgroundColor: 'white', padding: '40px', boxSizing: 'border-box' }} ref={pdfTemplateRef}>
-                  <h1 style={{ fontSize: '32px', fontWeight: 'bold', textAlign: 'center', marginBottom: '30px', color: '#000' }}>맨홀 작업 일정 사전송부</h1>
-                  <div style={{ textAlign: 'left', marginBottom: '20px', fontSize: '18px', color: '#000', lineHeight: '1.8' }}>
-                    <div><strong>수신자:</strong> {formData.receiver}</div>
-                    <div style={{ marginTop: '10px' }}><strong>발신자:</strong> {formData.sender}</div>
-                  </div>
-                  <table style={{ width: '100%', borderCollapse: 'collapse', border: '2px solid black', color: '#000', fontSize: '16px', tableLayout: 'fixed' }}>
-                    <tbody>
-                      <tr>
-                        <th style={{ border: '1px solid black', backgroundColor: '#f3f4f6', padding: '12px', width: '20%', textAlign: 'center', verticalAlign: 'middle', fontWeight: 'bold' }}>사업장명<br/>(건설 현장명)</th>
-                        <td style={{ border: '1px solid black', padding: '12px', width: '30%', wordBreak: 'break-word', whiteSpace: 'pre-wrap' }}>{formData.companyName}</td>
-                        <th style={{ border: '1px solid black', backgroundColor: '#f3f4f6', padding: '12px', width: '20%', textAlign: 'center', verticalAlign: 'middle', fontWeight: 'bold' }}>대표자<br/>(현장 책임자)</th>
-                        <td style={{ border: '1px solid black', padding: '12px', width: '30%', wordBreak: 'break-word', whiteSpace: 'pre-wrap' }}>{formData.representative}</td>
-                      </tr>
-                      <tr>
-                        <th style={{ border: '1px solid black', backgroundColor: '#f3f4f6', padding: '12px', textAlign: 'center', verticalAlign: 'middle', fontWeight: 'bold' }}>소재지<br/>(맨홀위치)</th>
-                        <td colSpan="3" style={{ border: '1px solid black', padding: '12px', wordBreak: 'break-word', whiteSpace: 'pre-wrap' }}>{formData.location}</td>
-                      </tr>
-                      <tr>
-                        <th style={{ border: '1px solid black', backgroundColor: '#f3f4f6', padding: '12px', textAlign: 'center', verticalAlign: 'middle', fontWeight: 'bold' }}>발주자</th>
-                        <td style={{ border: '1px solid black', padding: '12px', wordBreak: 'break-word', whiteSpace: 'pre-wrap' }}>{formData.client}</td>
-                        <th style={{ border: '1px solid black', backgroundColor: '#f3f4f6', padding: '12px', textAlign: 'center', verticalAlign: 'middle', fontWeight: 'bold' }}>현장 연락처<br/>(핸드폰 등)</th>
-                        <td style={{ border: '1px solid black', padding: '12px', wordBreak: 'break-word', whiteSpace: 'pre-wrap' }}>{formData.contact}</td>
-                      </tr>
-                      <tr>
-                        <th rowSpan="3" style={{ border: '1px solid black', backgroundColor: '#f3f4f6', padding: '12px', textAlign: 'center', verticalAlign: 'middle', fontWeight: 'bold' }}>작업정보</th>
-                        <td colSpan="3" style={{ border: '1px solid black', padding: '24px 12px', wordBreak: 'break-word', whiteSpace: 'pre-wrap' }}><strong>1. 작업 일시:</strong> {formData.workDate}</td>
-                      </tr>
-                      <tr>
-                        <td colSpan="3" style={{ border: '1px solid black', padding: '30px 12px', wordBreak: 'break-word', whiteSpace: 'pre-wrap' }}><strong>2. 작업 내용:</strong> {formData.workContent}</td>
-                      </tr>
-                      <tr>
-                        <td colSpan="3" style={{ border: '1px solid black', padding: '30px 12px', wordBreak: 'break-word', whiteSpace: 'pre-wrap' }}><strong>3. 기타:</strong> {formData.otherInfo}</td>
-                      </tr>
-                      <tr>
-                        <th style={{ border: '1px solid black', backgroundColor: '#f3f4f6', padding: '12px', textAlign: 'center', verticalAlign: 'middle', fontWeight: 'bold' }}>특이사항</th>
-                        <td colSpan="3" style={{ border: '1px solid black', padding: '12px', wordBreak: 'break-word', whiteSpace: 'pre-wrap' }}>{formData.remarks}</td>
-                      </tr>
-                      <tr>
-                        <th style={{ border: '1px solid black', backgroundColor: '#f3f4f6', padding: '12px', textAlign: 'center', verticalAlign: 'middle', fontWeight: 'bold' }}>입회자<br/>(담당 공무원)</th>
-                        <td colSpan="3" style={{ border: '1px solid black', padding: '12px', wordBreak: 'break-word', whiteSpace: 'pre-wrap' }}>{formData.inspector}</td>
-                      </tr>
-                      <tr>
-                        <td colSpan="4" style={{ border: '1px solid black', padding: '24px 12px', textAlign: 'center', backgroundColor: '#fff' }}>
-                          <div style={{ fontSize: '22px', fontWeight: '900', marginBottom: '14px', color: '#000' }}>
-                            『맨홀 질식재해 예방 3대 안전수칙』 준수
-                          </div>
-                          <div style={{ fontSize: '17px', fontWeight: 'bold', color: '#000', letterSpacing: '-0.5px' }}>
-                            ①산소 및 유해가스 측정! &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ②충분한 환기! &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ③호흡보호구(송기마스크 등) 착용!
-                          </div>
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
-                  <div style={{ marginTop: '12px', fontSize: '14.5px', fontWeight: 'bold', color: '#2563EB', textAlign: 'left' }}>
-                          ※ 관할 노동관서와 협의하여 자유로운 서식으로 오픈채팅방, 문자 등으로 송부 가능
-                  </div>
-                </div>
-
-                <div className="mt-auto px-6 pt-4 pb-6 bg-[#F8FAFC] space-y-3 shrink-0 border-t border-slate-100">
-                  <button onClick={saveAsPDF} className="w-full bg-slate-800 hover:bg-slate-700 text-white font-bold py-4 rounded-2xl shadow-lg active:scale-[0.98] transition-all duration-300 text-sm flex items-center justify-center gap-2">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
-                    작성 서식 저용량 PDF 다운로드
-                  </button>
-                  <button onClick={nextStep} className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-2xl shadow-lg hover:shadow-blue-500/25 active:scale-[0.98] transition-all duration-300 text-lg">
-                    가이드 확인 진행
+                <div className="mt-auto pt-6 pb-2 bg-white">
+                  <button 
+                    onClick={nextStep} 
+                    disabled={!q1 || !q2 || !q3 || !q4} 
+                    className="w-full bg-blue-600 disabled:bg-slate-100 disabled:text-slate-400 text-white font-bold py-4 rounded-2xl shadow-lg hover:shadow-blue-500/30 disabled:shadow-none active:scale-[0.98] transition-all duration-300 text-lg"
+                  >
+                    평가 결과 확인
                   </button>
                 </div>
               </div>
             )}
 
-            {/* Step 3: 질식사고예방 사전준비 확인사항 (이미지 + 다운로드 기능) */}
+            {/* Step 3: 평가 리포트 */}
             {step === 3 && (
-              <div className="flex-1 flex flex-col bg-[#F8FAFC] animate-in slide-in-from-right-4 duration-500 ease-out h-full overflow-hidden">
-                <div className="p-6 pb-4 shrink-0 bg-white border-b border-slate-100 shadow-sm z-10 relative text-center">
-                  <h2 className="text-2xl font-extrabold text-slate-900 mb-2 tracking-tight">질식사고예방 사전준비 확인사항</h2>
-                  <p className="text-slate-500 text-sm font-medium leading-relaxed">
-                    작업 전 필수 안전조치 사항을 이미지로 한눈에 확인하세요.
-                  </p>
-                </div>
-
-                <div className="flex-1 overflow-y-auto custom-scrollbar p-6 bg-slate-50 flex flex-col justify-start items-center">
-                  <div className="w-full rounded-2xl overflow-hidden shadow-md border border-slate-200 bg-white">
-                    <img
-                      src="질식사고예방 사전준비 확인사항.jpg"
-                      alt="질식사고예방 사전준비 확인사항"
-                      className="w-full h-auto object-contain block"
-                    />
-                  </div>
-                </div>
-
-                <div className="p-6 pt-4 pb-6 bg-white border-t border-slate-100 shrink-0 shadow-[0_-10px_20px_-10px_rgba(0,0,0,0.05)] z-10 relative space-y-3">
-                  <button
-                    onClick={downloadGuideImage}
-                    className="w-full bg-slate-800 hover:bg-slate-700 text-white font-bold py-4 rounded-2xl shadow-lg active:scale-[0.98] transition-all duration-300 text-sm flex items-center justify-center gap-2"
-                  >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
-                    동영상 촬영가이드 다운로드
-                  </button>
-                  <button
-                    onClick={nextStep}
-                    className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-2xl shadow-lg hover:shadow-blue-500/30 active:scale-[0.98] transition-all duration-300 text-lg"
-                  >
-                    확인완료 및 자율점검으로
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* Step 4: 체크리스트 질문 */}
-            {step === 4 && (
-              <div className="p-6 flex-1 flex flex-col animate-in slide-in-from-right-4 duration-500 ease-out text-center overflow-y-auto custom-scrollbar">
-                <div className="mb-6">
-                  <h2 className="text-2xl font-extrabold text-slate-900 mb-2 tracking-tight">맨홀 안전작업 체크리스트</h2>
-                  <p className="text-slate-500 text-sm font-medium leading-relaxed">
-                    안전한 맨홀 작업을 위해 아래 항목들을 꼼꼼히 확인해 주세요.
-                  </p>
-                </div>
-                <div className="space-y-4 pb-4 text-left">
-                  {[
-                    { qState: q1, setFn: setQ1, num: '1', text: '작업허가서 발급하셨나요?' },
-                    { qState: q2, setFn: setQ2, num: '2', text: '작업현황판 및 출입금지 게시하셨나요?' },
-                    { qState: q3, setFn: setQ3, num: '3', text: '산소 및 유해가스 측정을 작업 전, 작업 중에도 하셨나요?' },
-                    { qState: q4, setFn: setQ4, num: '4', text: '환기팬 가동 및 보유 환기팬의 풍량(정압)을 아시나요?' },
-                    { qState: q5, setFn: setQ5, num: '5', text: '송기마스크 등 호흡용보호구 비치 하셨나요?' },
-                    { qState: q6, setFn: setQ6, num: '6', text: '구조장비 설치 및 감시인 배치 하셨나요?' },
-                    { qState: q7, setFn: setQ7, num: '7', text: '작업 전 안전교육(TBM) 실시하셨나요?' }
-                  ].map((item, idx) => (
-                    <div key={idx} className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm hover:border-blue-100 transition-colors">
-                      <p className="font-bold text-slate-800 mb-4 text-sm leading-snug"><span className="text-blue-600 mr-1">{item.num}.</span> {item.text}</p>
-                      <div className="flex gap-2">
-                        <button onClick={() => item.setFn('yes')} className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all border ${item.qState === 'yes' ? 'bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-500/20' : 'bg-slate-50 text-slate-600 border-transparent hover:bg-slate-100'}`}>예</button>
-                        <button onClick={() => item.setFn('no')} className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all border ${item.qState === 'no' ? 'bg-rose-500 text-white border-rose-500 shadow-md shadow-rose-500/20' : 'bg-slate-50 text-slate-600 border-transparent hover:bg-slate-100'}`}>아니오</button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                <div className="mt-auto pt-4 pb-2 bg-transparent shrink-0">
-                  <button onClick={nextStep} disabled={!q1 || !q2 || !q3 || !q4 || !q5 || !q6 || !q7} className="w-full bg-blue-600 disabled:bg-slate-200 disabled:text-slate-400 text-white font-bold py-4 rounded-2xl shadow-lg hover:shadow-blue-500/30 disabled:shadow-none active:scale-[0.98] transition-all duration-300 text-lg">
-                    평가 리포트 확인
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* Step 5: 평가 리포트 */}
-            {step === 5 && (
-              <div className="p-6 flex-1 flex flex-col bg-[#F8FAFC] animate-in slide-in-from-right-4 duration-500 ease-out overflow-y-auto custom-scrollbar">
+              <div className="p-6 flex-1 flex flex-col bg-[#F8FAFC] animate-in slide-in-from-right-4 duration-500 ease-out overflow-y-auto">
                 <div className="mb-6">
                   <h2 className="text-2xl font-extrabold text-slate-900 mb-2 tracking-tight">평가 리포트</h2>
-                  <p className="text-slate-500 text-sm font-medium leading-relaxed">안전한 작업을 위해 아래 조치사항을 반드시 준수해 주세요.</p>
+                  <p className="text-slate-500 text-sm font-medium leading-relaxed">
+                    안전한 작업을 위해 아래 조치사항을 반드시 준수해 주세요.
+                  </p>
                 </div>
+
                 <div className="space-y-3 mb-6">
                   {[
-                    { q: q1, title: '작업허가서 발급', pass: '작업허가 절차를 준수하여 안전하게 작업을 진행합니다.', fail: '작업 전 반드시 작업허가서를 발급받고 승인을 득하세요.' },
-                    { q: q2, title: '작업현황판 및 출입금지 게시', pass: '작업 상황과 위험을 외부에서 명확히 인지할 수 있습니다.', fail: '출입구에 밀폐공간 출입금지 표지와 현황판을 게시하세요.' },
-                    { q: q3, title: '산소 및 유해가스 측정', pass: '지속적인 측정으로 안전한 공기 상태를 확인합니다.', fail: '작업 전은 물론 작업 중에도 지속적으로 농도를 측정하세요.' },
-                    { q: q4, title: '환기팬 가동 및 성능 확인', pass: '적절한 환기 조치 및 장비 성능 인지가 완료되었습니다.', fail: '배풍기 성능을 파악하고, 작업 전/중 충분한 환기를 실시하세요.' },
-                    { q: q5, title: '호흡용보호구 비치', pass: '비상 상황 및 구조 작업에 대비한 보호구가 준비되었습니다.', fail: '밀폐공간 작업용 송기마스크 또는 공기호흡기를 비치하세요.' },
-                    { q: q6, title: '구조장비 설치 및 감시인 배치', pass: '신속한 구조 체계 및 외부 감시가 원활히 이루어집니다.', fail: '전담 감시인을 배치하고 구출용 장비(삼각대 등)를 설치하세요.' },
-                    { q: q7, title: '작업 전 안전교육(TBM) 실시', pass: '작업자 모두가 위험 요인과 안전 수칙을 숙지하였습니다.', fail: '작업 전 위험예지(TBM)를 통해 안전한 작업방법을 교육하세요.' }
+                    { q: q1, title: '배풍기 풍량', pass: '풍량을 인지하고 있어 정확한 환기량 산출이 가능합니다.', fail: '장비 제원표를 반드시 확인하여 풍량을 파악하세요.' },
+                    { q: q2, title: '배풍기 정압', pass: '정압을 인지하고 있어 압력 손실 예측이 가능합니다.', fail: '제원표를 확인하여 배풍기 정압 40mmAq 이상의 장비를 활용하세요.' },
+                    { q: q3, title: '덕트 길이', pass: '기준을 준수하여 환기 효율 저하를 예방합니다.', fail: '길이를 줄이거나 고정압 배풍기를 사용하세요.' },
+                    { q: q4, title: '덕트 하단 위치', pass: '효과적인 환기(급기)가 이루어질 수 있는 적절한 위치입니다.', fail: '사각지대 방지를 위해 덕트를 밀폐공간 하단으로 재조정하세요.' }
                   ].map((item, idx) => (
                     <div key={idx} className={`p-4 rounded-2xl flex items-start gap-3 bg-white border border-slate-100 shadow-sm`}>
                       <div className={`mt-0.5 rounded-full p-1 ${item.q === 'yes' ? 'bg-blue-50 text-blue-600' : 'bg-rose-50 text-rose-500'}`}>
-                        {item.q === 'yes' ? <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg> : <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>}
+                        {item.q === 'yes' ? (
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
+                        ) : (
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                        )}
                       </div>
                       <div>
                         <p className="font-bold text-slate-800 text-sm mb-0.5">{idx + 1}. {item.title}</p>
-                        <p className={`text-xs font-medium ${item.q === 'yes' ? 'text-slate-500' : 'text-rose-600'}`}>{item.q === 'yes' ? item.pass : item.fail}</p>
+                        <p className={`text-xs font-medium ${item.q === 'yes' ? 'text-slate-500' : 'text-rose-600'}`}>
+                          {item.q === 'yes' ? item.pass : item.fail}
+                        </p>
                       </div>
                     </div>
                   ))}
                 </div>
+
                 <div className="bg-gradient-to-br from-rose-50 to-orange-50 border border-rose-100 p-5 rounded-2xl shadow-sm mb-6">
                   <div className="flex items-center gap-2 mb-3">
-                    <div className="bg-rose-100 p-1.5 rounded-lg text-rose-600"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg></div>
-                    <h3 className="font-extrabold text-rose-800 text-sm tracking-tight">감소대책 조치사항 (배풍기 기준)</h3>
+                    <div className="bg-rose-100 p-1.5 rounded-lg text-rose-600">
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                    </div>
+                    <h3 className="font-extrabold text-rose-800 text-sm tracking-tight">감소대책 조치사항</h3>
                   </div>
-                  <p className="text-xs text-rose-700/90 leading-relaxed font-semibold">보유 배풍기 풍량이 <span className="bg-rose-200/50 px-1 rounded">5,000 m³/hr 이하</span>일 경우 정압은 <span className="bg-rose-200/50 px-1 rounded">40mmAq 미만</span>이 될 수 있으므로, <span className="text-rose-700 font-bold">풍량 5,000 m³/hr(또는 정압 40mmAq) 이상의 장비로 교체</span>하여 주시기 바랍니다.</p>
+                  <p className="text-xs text-rose-700/90 leading-relaxed font-semibold">
+                    보유 배풍기 풍량이 <span className="bg-rose-200/50 px-1 rounded">5,000 m³/hr 이하</span>일 경우 정압은 <span className="bg-rose-200/50 px-1 rounded">40mmAq 미만</span>이 될 수 있으므로, <span className="text-rose-700 font-bold">풍량 5,000 m³/hr(또는 정압 40mmAq) 이상의 장비로 교체</span>하여 주시기 바랍니다.
+                  </p>
                 </div>
-                <div className="mt-auto pt-2 pb-4 bg-transparent shrink-0">
-                  <button onClick={nextStep} className="w-full bg-slate-900 hover:bg-blue-600 text-white font-bold py-4 rounded-2xl shadow-lg hover:shadow-blue-500/25 active:scale-[0.98] transition-all duration-300 text-lg">맨홀공간 확인하기</button>
+
+                <div className="mt-auto pt-2 pb-4">
+                  <button 
+                    onClick={nextStep} 
+                    className="w-full bg-slate-900 hover:bg-blue-600 text-white font-bold py-4 rounded-2xl shadow-lg hover:shadow-blue-500/25 active:scale-[0.98] transition-all duration-300 text-lg"
+                  >
+                    환기계산 진행하기
+                  </button>
                 </div>
               </div>
             )}
 
-            {/* Step 6: 배풍기 풍량 입력 */}
-            {step === 6 && (
-              <div className="p-6 flex-1 flex flex-col animate-in slide-in-from-right-4 duration-500 ease-out overflow-y-auto custom-scrollbar">
+            { }
+            {step === 4 && (
+              <div className="p-6 flex-1 flex flex-col animate-in slide-in-from-right-4 duration-500 ease-out">
                 <div className="mb-8">
-                  <h2 className="text-2xl font-extrabold text-slate-900 mb-2 tracking-tight">보유 배풍기(환기팬) 풍량 확인</h2>
-                  <p className="text-slate-500 text-sm font-medium leading-relaxed">현재 보유중인 배풍기(송풍기/포터블팬)의 성능을 입력해주세요.</p>
+                  <h2 className="text-2xl font-extrabold text-slate-900 mb-2 tracking-tight">배풍기 풍량 입력</h2>
+                  <p className="text-slate-500 text-sm font-medium leading-relaxed">
+                    현재 보유중인 배풍기(송풍기/포터블팬)의 성능을 입력해주세요.
+                  </p>
                 </div>
+
                 <div className="space-y-4">
                   <div className={`transition-all duration-500 overflow-hidden ${parseFloat(fanCapacity) > 0 && parseFloat(fanCapacity) < 5000 ? 'max-h-40 opacity-100 mb-4' : 'max-h-0 opacity-0 mb-0'}`}>
                     <div className="p-4 bg-orange-50 border border-orange-100 rounded-2xl flex items-start gap-3">
                       <span className="text-orange-500 mt-0.5">⚠️</span>
-                      <p className="text-xs text-orange-700 font-bold leading-relaxed">5,000 m³/hr 이상 풍량일 경우 정압 40mmAq 이상이 되므로, 풍량 5,000 m³/hr 이상의 배풍기를 구매하여 주시기 바랍니다.</p>
+                      <p className="text-xs text-orange-700 font-bold leading-relaxed">
+                        5,000 m³/hr 이상 풍량일 경우 정압 40mmAq 이상이 되므로, 풍량 5,000 m³/hr 이상의 배풍기를 구매하여 주시기 바랍니다.
+                      </p>
                     </div>
                   </div>
+
                   <label className="block text-sm font-bold text-slate-700 ml-1">보유 풍량 <span className="text-blue-500">*</span></label>
                   <div className="relative group">
-                    <input type="number" value={fanCapacity} onChange={e => setFanCapacity(e.target.value)} placeholder="0" min="0" className="w-full text-3xl p-5 border border-slate-200 rounded-2xl focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 focus:outline-none transition-all font-black text-slate-800 bg-slate-50 focus:bg-white placeholder:text-slate-300 shadow-inner" />
+                    <input 
+                      type="number" 
+                      value={fanCapacity} 
+                      onChange={e => setFanCapacity(e.target.value)} 
+                      placeholder="0" 
+                      min="0"
+                      className="w-full text-3xl p-5 border border-slate-200 rounded-2xl focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 focus:outline-none transition-all font-black text-slate-800 bg-slate-50 focus:bg-white placeholder:text-slate-300 shadow-inner" 
+                    />
                     <span className="absolute right-6 top-1/2 -translate-y-1/2 text-slate-400 font-bold group-focus-within:text-blue-500 transition-colors">m³/hr</span>
                   </div>
+
+                  {}
                   <div className="mt-6 bg-white rounded-2xl p-4 border border-slate-100 shadow-sm flex flex-col items-center">
-                    <span className="text-xs font-bold text-slate-500 bg-slate-50 px-3 py-1 rounded-full mb-3 border border-slate-100">풍량 확인방법 예시</span>
+                    <span className="text-xs font-bold text-slate-500 bg-slate-50 px-3 py-1 rounded-full mb-3 border border-slate-100">
+                      풍량 확인방법 예시
+                    </span>
                     <div className="w-full rounded-xl overflow-hidden border border-slate-100 bg-slate-50 flex justify-center p-1">
-                      <img src="image_02e923.png" alt="배풍기 제원표 최대풍량 확인 예시" className="w-full h-auto object-contain max-h-48 rounded-lg" />
+                      <img 
+                        src="image_02e923.png" 
+                        alt="배풍기 제원표 최대풍량 확인 예시" 
+                        className="w-full h-auto object-contain max-h-48 rounded-lg"
+                      />
                     </div>
-                    <p className="text-[11px] text-slate-400 font-medium mt-3 text-center leading-relaxed">장비 측면에 부착된 제원표(명판)에서<br/><strong className="text-slate-600">'최대풍량'</strong> 또는 <strong className="text-slate-600">'풍량'</strong> 항목을 확인해 주세요.</p>
+                    <p className="text-[11px] text-slate-400 font-medium mt-3 text-center leading-relaxed">
+                      장비 측면에 부착된 제원표(명판)에서<br/>
+                      <strong className="text-slate-600">'최대풍량'</strong> 또는 <strong className="text-slate-600">'풍량'</strong> 항목을 확인해 주세요.
+                    </p>
                   </div>
+
                 </div>
-                <div className="mt-auto pt-8 pb-4 shrink-0">
-                   <button onClick={nextStep} disabled={!fanCapacity || parseFloat(fanCapacity) <= 0} className="w-full bg-blue-600 disabled:bg-slate-100 disabled:text-slate-400 text-white font-bold py-4 rounded-2xl shadow-lg hover:shadow-blue-500/30 disabled:shadow-none active:scale-[0.98] transition-all duration-300 text-lg">다음으로</button>
+
+                <div className="mt-auto pt-8 pb-4">
+                   <button 
+                    onClick={nextStep} 
+                    disabled={!fanCapacity || parseFloat(fanCapacity) <= 0} 
+                    className="w-full bg-blue-600 disabled:bg-slate-100 disabled:text-slate-400 text-white font-bold py-4 rounded-2xl shadow-lg hover:shadow-blue-500/30 disabled:shadow-none active:scale-[0.98] transition-all duration-300 text-lg"
+                  >
+                    다음으로
+                  </button>
                 </div>
               </div>
             )}
 
-            {/* Step 7: 맨홀 공간 형태 선택 */}
-            {step === 7 && (
+            { }
+            {step === 5 && (
               <div className="p-6 flex-1 flex flex-col animate-in slide-in-from-right-4 duration-500 ease-out">
                 <div className="mb-8">
-                  <h2 className="text-2xl font-extrabold text-slate-900 mb-2 tracking-tight">맨홀 공간 형태 선택</h2>
-                  <p className="text-slate-500 text-sm font-medium leading-relaxed">작업하실 밀폐공간의 형태를 선택해주세요.</p>
+                  <h2 className="text-2xl font-extrabold text-slate-900 mb-2 tracking-tight">공간 형태 선택</h2>
+                  <p className="text-slate-500 text-sm font-medium leading-relaxed">
+                    작업하실 밀폐공간의 형태를 선택해주세요.
+                  </p>
                 </div>
+
                 <div className="space-y-4 mt-2">
-                  <button onClick={() => { setShape('rect'); nextStep(); }} className="w-full bg-white border border-slate-200 hover:border-blue-500 hover:bg-blue-50/50 p-6 rounded-[1.5rem] flex items-center shadow-sm hover:shadow-md transition-all duration-300 group">
-                    <div className="w-14 h-14 bg-slate-50 group-hover:bg-white rounded-2xl flex items-center justify-center mr-5 shadow-inner transition-colors"><div className="w-7 h-5 border-[3px] border-slate-400 group-hover:border-blue-500 rounded-sm transition-colors"></div></div>
+                  <button 
+                    onClick={() => { setShape('rect'); nextStep(); }} 
+                    className="w-full bg-white border border-slate-200 hover:border-blue-500 hover:bg-blue-50/50 p-6 rounded-[1.5rem] flex items-center shadow-sm hover:shadow-md transition-all duration-300 group"
+                  >
+                    <div className="w-14 h-14 bg-slate-50 group-hover:bg-white rounded-2xl flex items-center justify-center mr-5 shadow-inner transition-colors">
+                      <div className="w-7 h-5 border-[3px] border-slate-400 group-hover:border-blue-500 rounded-sm transition-colors"></div>
+                    </div>
                     <div className="text-left">
                       <h3 className="text-lg font-bold text-slate-800 group-hover:text-blue-700 transition-colors">직사각형</h3>
                       <p className="text-xs text-slate-400 mt-1 font-medium">가로, 세로, 높이 기반</p>
                     </div>
-                    <div className="ml-auto opacity-0 group-hover:opacity-100 text-blue-500 transition-opacity"><svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg></div>
+                    <div className="ml-auto opacity-0 group-hover:opacity-100 text-blue-500 transition-opacity">
+                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+                    </div>
                   </button>
-                  <button onClick={() => { setShape('cyl'); nextStep(); }} className="w-full bg-white border border-slate-200 hover:border-blue-500 hover:bg-blue-50/50 p-6 rounded-[1.5rem] flex items-center shadow-sm hover:shadow-md transition-all duration-300 group">
-                    <div className="w-14 h-14 bg-slate-50 group-hover:bg-white rounded-2xl flex items-center justify-center mr-5 shadow-inner transition-colors"><div className="w-6 h-6 border-[3px] border-slate-400 group-hover:border-blue-500 rounded-full transition-colors"></div></div>
+
+                  <button 
+                    onClick={() => { setShape('cyl'); nextStep(); }} 
+                    className="w-full bg-white border border-slate-200 hover:border-blue-500 hover:bg-blue-50/50 p-6 rounded-[1.5rem] flex items-center shadow-sm hover:shadow-md transition-all duration-300 group"
+                  >
+                    <div className="w-14 h-14 bg-slate-50 group-hover:bg-white rounded-2xl flex items-center justify-center mr-5 shadow-inner transition-colors">
+                      <div className="w-6 h-6 border-[3px] border-slate-400 group-hover:border-blue-500 rounded-full transition-colors"></div>
+                    </div>
                     <div className="text-left">
                       <h3 className="text-lg font-bold text-slate-800 group-hover:text-blue-700 transition-colors">원통형(원형)</h3>
                       <p className="text-xs text-slate-400 mt-1 font-medium">지름, 높이 기반</p>
                     </div>
-                    <div className="ml-auto opacity-0 group-hover:opacity-100 text-blue-500 transition-opacity"><svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg></div>
+                    <div className="ml-auto opacity-0 group-hover:opacity-100 text-blue-500 transition-opacity">
+                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+                    </div>
                   </button>
-                  <button onClick={() => { setShape('combo'); nextStep(); }} className="w-full bg-white border border-slate-200 hover:border-blue-500 hover:bg-blue-50/50 p-6 rounded-[1.5rem] flex items-center shadow-sm hover:shadow-md transition-all duration-300 group">
-                    <div className="w-14 h-14 bg-slate-50 group-hover:bg-white rounded-2xl flex items-center justify-center mr-5 shadow-inner transition-colors"><div className="w-7 h-7 border-[3px] border-slate-400 group-hover:border-blue-500 rounded-lg flex items-center justify-center transition-colors"><div className="w-3 h-3 border-[2px] border-slate-400 group-hover:border-blue-500 rounded-full bg-slate-100"></div></div></div>
+
+                  <button 
+                    onClick={() => { setShape('combo'); nextStep(); }} 
+                    className="w-full bg-white border border-slate-200 hover:border-blue-500 hover:bg-blue-50/50 p-6 rounded-[1.5rem] flex items-center shadow-sm hover:shadow-md transition-all duration-300 group"
+                  >
+                    <div className="w-14 h-14 bg-slate-50 group-hover:bg-white rounded-2xl flex items-center justify-center mr-5 shadow-inner transition-colors">
+                      <div className="w-7 h-7 border-[3px] border-slate-400 group-hover:border-blue-500 rounded-lg flex items-center justify-center transition-colors">
+                        <div className="w-3 h-3 border-[2px] border-slate-400 group-hover:border-blue-500 rounded-full bg-slate-100"></div>
+                      </div>
+                    </div>
                     <div className="text-left">
                       <h3 className="text-lg font-bold text-slate-800 group-hover:text-blue-700 transition-colors">결합형</h3>
                       <p className="text-xs text-slate-400 mt-1 font-medium">직사각형 + 원통형</p>
                     </div>
-                    <div className="ml-auto opacity-0 group-hover:opacity-100 text-blue-500 transition-opacity"><svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg></div>
+                    <div className="ml-auto opacity-0 group-hover:opacity-100 text-blue-500 transition-opacity">
+                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+                    </div>
                   </button>
                 </div>
               </div>
             )}
 
-            {/* Step 8: 맨홀 제원 입력 */}
-            {step === 8 && (
+            {}
+            {step === 6 && (
               <div className="p-6 flex-1 flex flex-col animate-in slide-in-from-right-4 duration-500 ease-out overflow-y-auto custom-scrollbar">
-                <div className="mb-6 shrink-0">
-                  <h2 className="text-2xl font-extrabold text-slate-900 mb-3 tracking-tight">{shape === 'rect' ? '직사각형' : shape === 'cyl' ? '원통형' : '결합형'} 맨홀 제원 입력</h2>
+                <div className="mb-6">
+                  <h2 className="text-2xl font-extrabold text-slate-900 mb-3 tracking-tight">
+                    {shape === 'rect' ? '직사각형' : shape === 'cyl' ? '원통형' : '결합형'} 제원 입력
+                  </h2>
                   <div className="inline-block bg-blue-50 px-3 py-1.5 rounded-lg border border-blue-100/50">
-                    <p className="text-xs font-bold text-blue-600 tracking-wide">{shape === 'rect' ? '가로 × 세로 × 높이 = 체적(m³)' : shape === 'cyl' ? '(3.14 × 지름² / 4) × 높이 = 체적(m³)' : '직사각형 체적 + 원통형 체적 = 총 체적(m³)'}</p>
+                    <p className="text-xs font-bold text-blue-600 tracking-wide">
+                      {shape === 'rect' ? '가로 × 세로 × 높이 = 체적(m³)' : shape === 'cyl' ? '(3.14 × 지름² / 4) × 높이 = 체적(m³)' : '직사각형 체적 + 원통형 체적 = 총 체적(m³)'}
+                    </p>
                   </div>
                 </div>
+
                 <div className="w-full max-w-[280px] mx-auto mt-2 pb-4">
                   {shape === 'rect' ? (
                     <div className="space-y-4">
-                      {['가로', '세로', '높이'].map((label, idx) => {
-                        const val = idx === 0 ? width : idx === 1 ? length : height;
-                        const setVal = idx === 0 ? setWidth : idx === 1 ? setLength : setHeight;
-                        return (
-                          <div key={label} className="flex items-stretch bg-white rounded-xl border border-slate-200 shadow-sm focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/20 transition-all overflow-hidden">
-                            <div className="w-16 bg-slate-50 flex items-center justify-center border-r border-slate-100 shrink-0"><span className="font-bold text-slate-600 text-sm">{label}</span></div>
-                            <input type="number" value={val} onChange={e => setVal(e.target.value)} placeholder="0.0" className="w-full min-w-0 flex-1 text-center text-xl py-3 outline-none font-black text-slate-800 bg-transparent placeholder:text-slate-200" />
-                            <div className="w-12 bg-slate-50 flex items-center justify-center border-l border-slate-100 shrink-0"><span className="font-bold text-slate-400 text-sm">m</span></div>
-                          </div>
-                        )
-                      })}
+                      <div className="flex items-stretch bg-white rounded-xl border border-slate-200 shadow-sm focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/20 transition-all overflow-hidden">
+                        <div className="w-16 bg-slate-50 flex items-center justify-center border-r border-slate-100 shrink-0">
+                          <span className="font-bold text-slate-600 text-sm">가로</span>
+                        </div>
+                        <input type="number" value={width} onChange={e => setWidth(e.target.value)} placeholder="0.0" className="w-full min-w-0 flex-1 text-center text-xl py-3 outline-none font-black text-slate-800 bg-transparent placeholder:text-slate-200" />
+                        <div className="w-12 bg-slate-50 flex items-center justify-center border-l border-slate-100 shrink-0">
+                          <span className="font-bold text-slate-400 text-sm">m</span>
+                        </div>
+                      </div>
+                      <div className="flex items-stretch bg-white rounded-xl border border-slate-200 shadow-sm focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/20 transition-all overflow-hidden">
+                        <div className="w-16 bg-slate-50 flex items-center justify-center border-r border-slate-100 shrink-0">
+                          <span className="font-bold text-slate-600 text-sm">세로</span>
+                        </div>
+                        <input type="number" value={length} onChange={e => setLength(e.target.value)} placeholder="0.0" className="w-full min-w-0 flex-1 text-center text-xl py-3 outline-none font-black text-slate-800 bg-transparent placeholder:text-slate-200" />
+                        <div className="w-12 bg-slate-50 flex items-center justify-center border-l border-slate-100 shrink-0">
+                          <span className="font-bold text-slate-400 text-sm">m</span>
+                        </div>
+                      </div>
+                      <div className="flex items-stretch bg-white rounded-xl border border-slate-200 shadow-sm focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/20 transition-all overflow-hidden">
+                        <div className="w-16 bg-slate-50 flex items-center justify-center border-r border-slate-100 shrink-0">
+                          <span className="font-bold text-slate-600 text-sm">높이</span>
+                        </div>
+                        <input type="number" value={height} onChange={e => setHeight(e.target.value)} placeholder="0.0" className="w-full min-w-0 flex-1 text-center text-xl py-3 outline-none font-black text-slate-800 bg-transparent placeholder:text-slate-200" />
+                        <div className="w-12 bg-slate-50 flex items-center justify-center border-l border-slate-100 shrink-0">
+                          <span className="font-bold text-slate-400 text-sm">m</span>
+                        </div>
+                      </div>
                     </div>
                   ) : shape === 'cyl' ? (
                     <div className="space-y-4">
-                      {['지름', '높이'].map((label, idx) => {
-                        const val = idx === 0 ? diameter : height;
-                        const setVal = idx === 0 ? setDiameter : setHeight;
-                        return (
-                          <div key={label} className="flex items-stretch bg-white rounded-xl border border-slate-200 shadow-sm focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/20 transition-all overflow-hidden">
-                            <div className="w-16 bg-slate-50 flex items-center justify-center border-r border-slate-100 shrink-0"><span className="font-bold text-slate-600 text-sm">{label}</span></div>
-                            <input type="number" value={val} onChange={e => setVal(e.target.value)} placeholder="0.0" className="w-full min-w-0 flex-1 text-center text-xl py-3 outline-none font-black text-slate-800 bg-transparent placeholder:text-slate-200" />
-                            <div className="w-12 bg-slate-50 flex items-center justify-center border-l border-slate-100 shrink-0"><span className="font-bold text-slate-400 text-sm">m</span></div>
-                          </div>
-                        )
-                      })}
+                      <div className="flex items-stretch bg-white rounded-xl border border-slate-200 shadow-sm focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/20 transition-all overflow-hidden">
+                        <div className="w-16 bg-slate-50 flex items-center justify-center border-r border-slate-100 shrink-0">
+                          <span className="font-bold text-slate-600 text-sm">지름</span>
+                        </div>
+                        <input type="number" value={diameter} onChange={e => setDiameter(e.target.value)} placeholder="0.0" className="w-full min-w-0 flex-1 text-center text-xl py-3 outline-none font-black text-slate-800 bg-transparent placeholder:text-slate-200" />
+                        <div className="w-12 bg-slate-50 flex items-center justify-center border-l border-slate-100 shrink-0">
+                          <span className="font-bold text-slate-400 text-sm">m</span>
+                        </div>
+                      </div>
+                      <div className="flex items-stretch bg-white rounded-xl border border-slate-200 shadow-sm focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/20 transition-all overflow-hidden">
+                        <div className="w-16 bg-slate-50 flex items-center justify-center border-r border-slate-100 shrink-0">
+                          <span className="font-bold text-slate-600 text-sm">높이</span>
+                        </div>
+                        <input type="number" value={height} onChange={e => setHeight(e.target.value)} placeholder="0.0" className="w-full min-w-0 flex-1 text-center text-xl py-3 outline-none font-black text-slate-800 bg-transparent placeholder:text-slate-200" />
+                        <div className="w-12 bg-slate-50 flex items-center justify-center border-l border-slate-100 shrink-0">
+                          <span className="font-bold text-slate-400 text-sm">m</span>
+                        </div>
+                      </div>
                     </div>
                   ) : (
                     <div className="space-y-6">
                       <div className="space-y-4">
-                        <h4 className="font-bold text-slate-700 text-sm ml-1 flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-blue-500"></span>직사각형 부분</h4>
-                        {['가로', '세로', '높이'].map((label, idx) => {
-                          const val = idx === 0 ? comboRectWidth : idx === 1 ? comboRectLength : comboRectHeight;
-                          const setVal = idx === 0 ? setComboRectWidth : idx === 1 ? setComboRectLength : setComboRectHeight;
-                          return (
-                            <div key={'rect'+label} className="flex items-stretch bg-white rounded-xl border border-slate-200 shadow-sm focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/20 transition-all overflow-hidden">
-                              <div className="w-16 bg-slate-50 flex items-center justify-center border-r border-slate-100 shrink-0"><span className="font-bold text-slate-600 text-sm">{label}</span></div>
-                              <input type="number" value={val} onChange={e => setVal(e.target.value)} placeholder="0.0" className="w-full min-w-0 flex-1 text-center text-xl py-3 outline-none font-black text-slate-800 bg-transparent placeholder:text-slate-200" />
-                              <div className="w-12 bg-slate-50 flex items-center justify-center border-l border-slate-100 shrink-0"><span className="font-bold text-slate-400 text-sm">m</span></div>
-                            </div>
-                          )
-                        })}
+                        <h4 className="font-bold text-slate-700 text-sm ml-1 flex items-center gap-2">
+                          <span className="w-1.5 h-1.5 rounded-full bg-blue-500"></span>직사각형 부분
+                        </h4>
+                        <div className="flex items-stretch bg-white rounded-xl border border-slate-200 shadow-sm focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/20 transition-all overflow-hidden">
+                          <div className="w-16 bg-slate-50 flex items-center justify-center border-r border-slate-100 shrink-0">
+                            <span className="font-bold text-slate-600 text-sm">가로</span>
+                          </div>
+                          <input type="number" value={comboRectWidth} onChange={e => setComboRectWidth(e.target.value)} placeholder="0.0" className="w-full min-w-0 flex-1 text-center text-xl py-3 outline-none font-black text-slate-800 bg-transparent placeholder:text-slate-200" />
+                          <div className="w-12 bg-slate-50 flex items-center justify-center border-l border-slate-100 shrink-0">
+                            <span className="font-bold text-slate-400 text-sm">m</span>
+                          </div>
+                        </div>
+                        <div className="flex items-stretch bg-white rounded-xl border border-slate-200 shadow-sm focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/20 transition-all overflow-hidden">
+                          <div className="w-16 bg-slate-50 flex items-center justify-center border-r border-slate-100 shrink-0">
+                            <span className="font-bold text-slate-600 text-sm">세로</span>
+                          </div>
+                          <input type="number" value={comboRectLength} onChange={e => setComboRectLength(e.target.value)} placeholder="0.0" className="w-full min-w-0 flex-1 text-center text-xl py-3 outline-none font-black text-slate-800 bg-transparent placeholder:text-slate-200" />
+                          <div className="w-12 bg-slate-50 flex items-center justify-center border-l border-slate-100 shrink-0">
+                            <span className="font-bold text-slate-400 text-sm">m</span>
+                          </div>
+                        </div>
+                        <div className="flex items-stretch bg-white rounded-xl border border-slate-200 shadow-sm focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/20 transition-all overflow-hidden">
+                          <div className="w-16 bg-slate-50 flex items-center justify-center border-r border-slate-100 shrink-0">
+                            <span className="font-bold text-slate-600 text-sm">높이</span>
+                          </div>
+                          <input type="number" value={comboRectHeight} onChange={e => setComboRectHeight(e.target.value)} placeholder="0.0" className="w-full min-w-0 flex-1 text-center text-xl py-3 outline-none font-black text-slate-800 bg-transparent placeholder:text-slate-200" />
+                          <div className="w-12 bg-slate-50 flex items-center justify-center border-l border-slate-100 shrink-0">
+                            <span className="font-bold text-slate-400 text-sm">m</span>
+                          </div>
+                        </div>
                       </div>
+                      
                       <div className="space-y-4">
-                        <h4 className="font-bold text-slate-700 text-sm ml-1 flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-cyan-500"></span>원통형 부분</h4>
-                        {['지름', '높이'].map((label, idx) => {
-                          const val = idx === 0 ? comboCylDiameter : comboCylHeight;
-                          const setVal = idx === 0 ? setComboCylDiameter : setComboCylHeight;
-                          return (
-                            <div key={'cyl'+label} className="flex items-stretch bg-white rounded-xl border border-slate-200 shadow-sm focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/20 transition-all overflow-hidden">
-                              <div className="w-16 bg-slate-50 flex items-center justify-center border-r border-slate-100 shrink-0"><span className="font-bold text-slate-600 text-sm">{label}</span></div>
-                              <input type="number" value={val} onChange={e => setVal(e.target.value)} placeholder="0.0" className="w-full min-w-0 flex-1 text-center text-xl py-3 outline-none font-black text-slate-800 bg-transparent placeholder:text-slate-200" />
-                              <div className="w-12 bg-slate-50 flex items-center justify-center border-l border-slate-100 shrink-0"><span className="font-bold text-slate-400 text-sm">m</span></div>
-                            </div>
-                          )
-                        })}
+                        <h4 className="font-bold text-slate-700 text-sm ml-1 flex items-center gap-2">
+                          <span className="w-1.5 h-1.5 rounded-full bg-cyan-500"></span>원통형 부분
+                        </h4>
+                        <div className="flex items-stretch bg-white rounded-xl border border-slate-200 shadow-sm focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/20 transition-all overflow-hidden">
+                          <div className="w-16 bg-slate-50 flex items-center justify-center border-r border-slate-100 shrink-0">
+                            <span className="font-bold text-slate-600 text-sm">지름</span>
+                          </div>
+                          <input type="number" value={comboCylDiameter} onChange={e => setComboCylDiameter(e.target.value)} placeholder="0.0" className="w-full min-w-0 flex-1 text-center text-xl py-3 outline-none font-black text-slate-800 bg-transparent placeholder:text-slate-200" />
+                          <div className="w-12 bg-slate-50 flex items-center justify-center border-l border-slate-100 shrink-0">
+                            <span className="font-bold text-slate-400 text-sm">m</span>
+                          </div>
+                        </div>
+                        <div className="flex items-stretch bg-white rounded-xl border border-slate-200 shadow-sm focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/20 transition-all overflow-hidden">
+                          <div className="w-16 bg-slate-50 flex items-center justify-center border-r border-slate-100 shrink-0">
+                            <span className="font-bold text-slate-600 text-sm">높이</span>
+                          </div>
+                          <input type="number" value={comboCylHeight} onChange={e => setComboCylHeight(e.target.value)} placeholder="0.0" className="w-full min-w-0 flex-1 text-center text-xl py-3 outline-none font-black text-slate-800 bg-transparent placeholder:text-slate-200" />
+                          <div className="w-12 bg-slate-50 flex items-center justify-center border-l border-slate-100 shrink-0">
+                            <span className="font-bold text-slate-400 text-sm">m</span>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   )}
                 </div>
+
                 <div className="mt-6 bg-slate-50 rounded-2xl p-5 border border-slate-100 flex justify-between items-center shadow-inner shrink-0">
                   <span className="text-slate-500 font-bold text-sm">총 체적(m³)</span>
-                  <span className="text-3xl font-black text-blue-600">{volume > 0 ? volume.toFixed(2) : '0.00'}</span>
+                  <span className="text-3xl font-black text-blue-600">
+                    {volume > 0 ? volume.toFixed(2) : '0.00'}
+                  </span>
                 </div>
+
                 <div className="mt-6 pt-2 pb-4 shrink-0">
-                   <button onClick={nextStep} disabled={volume <= 0} className="w-full bg-blue-600 disabled:bg-slate-100 disabled:text-slate-400 text-white font-bold py-4 rounded-2xl shadow-lg hover:shadow-blue-500/30 disabled:shadow-none active:scale-[0.98] transition-all duration-300 text-lg">환기계산 결과 보기</button>
+                   <button 
+                    onClick={nextStep} 
+                    disabled={volume <= 0} 
+                    className="w-full bg-blue-600 disabled:bg-slate-100 disabled:text-slate-400 text-white font-bold py-4 rounded-2xl shadow-lg hover:shadow-blue-500/30 disabled:shadow-none active:scale-[0.98] transition-all duration-300 text-lg"
+                  >
+                    환기계산 결과 보기
+                  </button>
                 </div>
               </div>
             )}
 
-            {/* Step 9: 결과 화면 */}
-            {step === 9 && (
+            {/* Step 7: 결과 화면 */}
+            {step === 7 && (
               <div className="flex-1 flex flex-col bg-[#F8FAFC] animate-in zoom-in-95 duration-500 ease-out overflow-y-auto custom-scrollbar">
+                
+                {/* 캡처 대상 영역 */}
                 <div ref={resultRef} className="p-6 space-y-5 pt-8 bg-[#F8FAFC]">
                   <div className="bg-white border border-slate-100 rounded-2xl p-5 shadow-sm">
-                    <h3 className="text-sm font-black text-blue-600 tracking-tight mb-4 ml-1">맨홀공간 정보 요약</h3>
+                    <h3 className="text-sm font-black text-blue-600 tracking-tight mb-4 ml-1">밀폐공간 환기 정보 요약</h3>
                     <div className="space-y-2 text-sm">
-                      <div className="flex justify-between items-center py-1.5 border-b border-slate-50"><span className="text-slate-500 font-medium">배풍기 풍량</span><span className="font-bold text-slate-800">{Number(fanCapacity).toLocaleString()} <span className="text-xs text-slate-400">m³/hr</span></span></div>
-                      <div className="flex justify-between items-center py-1.5 border-b border-slate-50"><span className="text-slate-500 font-medium">공간 형태</span><span className="font-bold text-slate-800">{shape === 'rect' ? '직사각형' : shape === 'cyl' ? '원통형' : '결합형 (직사각+원형)'}</span></div>
-                      <div className="flex justify-between items-center py-1.5"><span className="text-slate-500 font-medium">밀폐공간 체적</span><span className="font-bold text-blue-600">{volume.toFixed(2)} <span className="text-xs text-slate-400">m³</span></span></div>
+                      <div className="flex justify-between items-center py-1.5 border-b border-slate-50">
+                        <span className="text-slate-500 font-medium">배풍기 풍량</span>
+                        <span className="font-bold text-slate-800">{Number(fanCapacity).toLocaleString()} <span className="text-xs text-slate-400">m³/hr</span></span>
+                      </div>
+                      <div className="flex justify-between items-center py-1.5 border-b border-slate-50">
+                        <span className="text-slate-500 font-medium">공간 형태</span>
+                        <span className="font-bold text-slate-800">{shape === 'rect' ? '직사각형' : shape === 'cyl' ? '원통형' : '결합형 (직사각+원형)'}</span>
+                      </div>
+                      <div className="flex justify-between items-center py-1.5">
+                        <span className="text-slate-500 font-medium">밀폐공간 체적</span>
+                        <span className="font-bold text-blue-600">{volume.toFixed(2)} <span className="text-xs text-slate-400">m³</span></span>
+                      </div>
                     </div>
                   </div>
 
+                  {/* 추가된 2페이지 위험성평가 리포트 결과 영역 */}
                   <div className="bg-white border border-slate-100 rounded-2xl p-5 shadow-sm">
-                    <h3 className="text-sm font-black text-blue-600 tracking-tight mb-3 ml-1">안전작업 체크리스트 결과</h3>
+                    <h3 className="text-sm font-black text-blue-600 tracking-tight mb-3 ml-1">위험성평가 체크리스트 결과</h3>
                     <div className="space-y-2">
-                      {[ 
-                        { q: q1, title: '1. 작업허가서 발급' }, 
-                        { q: q2, title: '2. 작업현황판/출입금지 게시' }, 
-                        { q: q3, title: '3. 산소 및 유해가스 측정' }, 
-                        { q: q4, title: '4. 환기팬 가동 및 성능 확인' },
-                        { q: q5, title: '5. 호흡용보호구 비치' },
-                        { q: q6, title: '6. 구조장비 및 감시인 배치' },
-                        { q: q7, title: '7. 작업 전 안전교육(TBM)' }
+                      {[
+                        { q: q1, title: '1. 배풍기 풍량 확인' },
+                        { q: q2, title: '2. 배풍기 정압 확인' },
+                        { q: q3, title: '3. 덕트 길이 기준 준수' },
+                        { q: q4, title: '4. 덕트 하단 위치 적정' }
                       ].map((item, idx) => (
                         <div key={idx} className="flex justify-between items-center py-2 border-b border-slate-50 last:border-0">
                           <span className="text-slate-600 text-[13px] font-medium">{item.title}</span>
-                          <span className={`text-[11px] font-extrabold px-2.5 py-1 rounded-md ${item.q === 'yes' ? 'bg-blue-50 text-blue-600' : 'bg-rose-50 text-rose-600'}`}>{item.q === 'yes' ? '예 (확인)' : '아니오 (부적정)'}</span>
+                          <span className={`text-[11px] font-extrabold px-2.5 py-1 rounded-md ${item.q === 'yes' ? 'bg-blue-50 text-blue-600' : 'bg-rose-50 text-rose-600'}`}>
+                            {item.q === 'yes' ? '예 (확인)' : '아니오 (부적정)'}
+                          </span>
                         </div>
                       ))}
                     </div>
                   </div>
 
-                  {(fanHr < 5000 || q1 === 'no' || q2 === 'no' || q3 === 'no' || q4 === 'no' || q5 === 'no' || q6 === 'no' || q7 === 'no') && (
+                  {(fanHr < 5000 || q1 === 'no' || q2 === 'no' || q3 === 'no' || q4 === 'no') && (
                     <div className="bg-rose-50 border border-rose-100 rounded-2xl p-5 shadow-sm">
-                      <h4 className="text-rose-800 font-bold text-sm mb-3 flex items-center gap-2"><svg className="w-5 h-5 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>개선조치사항</h4>
+                      <h4 className="text-rose-800 font-bold text-sm mb-3 flex items-center gap-2">
+                        <svg className="w-5 h-5 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        개선조치사항
+                      </h4>
                       <ul className="text-xs text-rose-700/90 leading-relaxed font-semibold space-y-2 list-disc pl-4">
-                        {fanHr < 5000 && <li>덕트 내 압력 손실로 인한 환기 불량을 방지하기 위해, 배풍기는 최소 풍량 5,000 m³/hr(또는 정압 40 mmAq) 이상의 사양을 사용하여 주시기 바랍니다.</li>}
-                        {q1 === 'no' && <li><span className="font-extrabold">작업허가서 미발급:</span> 작업 전 반드시 작업허가서를 발급받고 허가권자의 승인을 득하세요.</li>}
-                        {q2 === 'no' && <li><span className="font-extrabold">현황판/표지 미게시:</span> 출입구에 밀폐공간 출입금지 표지와 작업현황판을 즉시 게시하세요.</li>}
-                        {q3 === 'no' && <li><span className="font-extrabold">가스측정 미흡:</span> 작업 전뿐만 아니라 작업 중에도 수시로 산소 및 유해가스 농도를 측정하세요.</li>}
-                        {q4 === 'no' && <li><span className="font-extrabold">환기팬/성능 미확인:</span> 장비 제원표를 확인하여 배풍기 성능을 파악하고 즉시 환기팬을 가동하세요.</li>}
-                        {q5 === 'no' && <li><span className="font-extrabold">보호구 미비치:</span> 밀폐공간 내부 작업 시 사용할 송기마스크 또는 공기호흡기를 반드시 비치하세요.</li>}
-                        {q6 === 'no' && <li><span className="font-extrabold">구조장비/감시인 누락:</span> 전담 감시인을 배치하고 구출용 삼각대, 윈치 등 구조장비를 즉각 설치하세요.</li>}
-                        {q7 === 'no' && <li><span className="font-extrabold">안전교육(TBM) 미실시:</span> 작업 전 위험예지(TBM)를 통해 안전한 작업방법과 보호구 착용법을 주지시키세요.</li>}
+                        {fanHr < 5000 && (
+                          <li>덕트 내 압력 손실로 인한 환기 불량을 방지하기 위해, 배풍기는 최소 풍량 5,000 m³/hr(또는 정압 40 mmAq) 이상의 사양을 사용하여 주시기 바랍니다.</li>
+                        )}
+                        {q1 === 'no' && (
+                          <li><span className="font-extrabold">배풍기 풍량 미확인:</span> 장비 제원표를 반드시 확인하여 정확한 환기량 산출이 가능하도록 파악하세요.</li>
+                        )}
+                        {q2 === 'no' && (
+                          <li><span className="font-extrabold">배풍기 정압 미확인:</span> 제원표를 확인하여 배풍기 정압 40mmAq 이상의 장비를 활용하세요.</li>
+                        )}
+                        {q3 === 'no' && (
+                          <li><span className="font-extrabold">덕트 길이 기준 초과:</span> 덕트 길이를 줄이거나 고정압 배풍기를 사용하여 환기 효율 저하를 예방하세요.</li>
+                        )}
+                        {q4 === 'no' && (
+                          <li><span className="font-extrabold">덕트 하단 위치 불량:</span> 사각지대 방지를 위해 덕트를 밀폐공간 하단으로 재조정하세요.</li>
+                        )}
                       </ul>
                     </div>
                   )}
@@ -753,32 +836,73 @@
                     <div className="bg-gradient-to-br from-blue-600 to-cyan-500 rounded-2xl p-6 shadow-lg shadow-blue-500/20 text-white relative overflow-hidden">
                       <div className="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-white/10 rounded-full blur-2xl"></div>
                       <h3 className="text-white font-extrabold text-[1.15rem] mb-1 tracking-tight">1. (작업 전) 환기시간</h3>
-                      <p className="text-[10px] text-blue-200/80 mb-4 font-semibold tracking-wide">※ 밀폐공간 체적 10배 급기, 배풍기 효율 80% 기준</p>
-                      <div className="flex items-baseline gap-1.5 mt-2"><span className="text-5xl font-black tracking-tighter">{ventTime}</span><span className="text-lg font-bold text-blue-100">min (분)</span>{isMinimumForced && <span className="ml-1 text-sm font-bold text-blue-200">이상</span>}</div>
-                      <div className="mt-4 bg-black/15 p-3.5 rounded-xl border border-white/10 backdrop-blur-sm"><p className="text-xs text-blue-50 font-medium leading-relaxed">⚠️ 주의: 이론적 환기시간은 {Math.ceil(rawVentTime)}분이나, 작업 전 반드시 <strong className="text-white">30분 이상 급기</strong>를 실시바랍니다.</p></div>
+                      <p className="text-[10px] text-blue-200/80 mb-4 font-semibold tracking-wide">
+                        ※ 밀폐공간 체적 10배 급기, 배풍기 효율 80% 기준
+                      </p>
+                      
+                      <div className="flex items-baseline gap-1.5 mt-2">
+                        <span className="text-5xl font-black tracking-tighter">{ventTime}</span>
+                        <span className="text-lg font-bold text-blue-100">min (분)</span>
+                        {isMinimumForced && <span className="ml-1 text-sm font-bold text-blue-200">이상</span>}
+                      </div>
+                      
+                      <div className="mt-4 bg-black/15 p-3.5 rounded-xl border border-white/10 backdrop-blur-sm">
+                        <p className="text-xs text-blue-50 font-medium leading-relaxed">
+                          ⚠️ 주의: 이론적 환기시간은 {Math.ceil(rawVentTime)}분이나, 작업 전 반드시 <strong className="text-white">30분 이상 급기</strong>를 실시바랍니다.
+                        </p>
+                      </div>
                     </div>
+
                     <div className="bg-gradient-to-br from-blue-600 to-cyan-500 rounded-2xl p-6 shadow-lg shadow-blue-500/20 text-white relative overflow-hidden">
                       <div className="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-white/10 rounded-full blur-2xl"></div>
                       <h3 className="text-white font-extrabold text-[1.15rem] mb-1 tracking-tight">2. (작업 중) 배풍기 환기 가동 대수</h3>
-                      <p className="text-[10px] text-blue-200/80 mb-4 font-semibold tracking-wide">※ 시간당 20회 환기, 배풍기 효율 80% 적용 기준</p>
-                      <div className="flex items-baseline gap-2 mt-1"><span className="text-5xl font-black tracking-tighter">{displayFanCount}</span></div>
-                      {rawFanCount > 1 && <div className="mt-4 bg-white/95 p-3.5 rounded-xl border border-rose-100 shadow-sm backdrop-blur-sm"><p className="text-[13px] text-rose-600 font-extrabold leading-relaxed">⚠️ 현재 배풍기를 해당 대수만큼 추가하여 환기 실시 바랍니다.</p></div>}
+                      <p className="text-[10px] text-blue-200/80 mb-4 font-semibold tracking-wide">
+                        ※ 시간당 20회 환기, 배풍기 효율 80% 적용 기준
+                      </p>
+                      <div className="flex items-baseline gap-2 mt-1">
+                        <span className="text-5xl font-black tracking-tighter">{displayFanCount}</span>
+                      </div>
+                      
+                      {rawFanCount > 1 && (
+                        <div className="mt-4 bg-white/95 p-3.5 rounded-xl border border-rose-100 shadow-sm backdrop-blur-sm">
+                          <p className="text-[13px] text-rose-600 font-extrabold leading-relaxed">
+                            ⚠️ 현재 배풍기를 해당 대수만큼 추가하여 환기 실시 바랍니다.
+                          </p>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
+
                 <div className="px-6 pt-2 pb-6 space-y-3 shrink-0">
-                  <button onClick={saveAsImage} className="w-full bg-slate-800 hover:bg-slate-700 text-white font-bold py-4 rounded-2xl shadow-lg active:scale-[0.98] transition-all duration-300 text-sm flex items-center justify-center gap-2"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>종합결과 이미지로 저장하기</button>
-                  <button onClick={reset} className="w-full bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-800 font-bold py-4 rounded-2xl active:scale-[0.98] transition-all duration-300 text-sm">새로운 계산하기</button>
+                  <button 
+                    onClick={saveAsImage} 
+                    className="w-full bg-slate-800 hover:bg-slate-700 text-white font-bold py-4 rounded-2xl shadow-lg active:scale-[0.98] transition-all duration-300 text-sm flex items-center justify-center gap-2"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                    종합결과 이미지로 저장하기
+                  </button>
+                  <button 
+                    onClick={reset} 
+                    className="w-full bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-800 font-bold py-4 rounded-2xl active:scale-[0.98] transition-all duration-300 text-sm"
+                  >
+                    새로운 계산하기
+                  </button>
                 </div>
               </div>
             )}
 
-            {/* PWA 설치 배너 */}
+            { }
             {showInstallBanner && !showInstallInstructions && (
               <div className="absolute bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-sm bg-white rounded-3xl p-5 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)] border border-slate-100 z-50 animate-in slide-in-from-bottom-10 fade-in duration-500">
                 <div className="flex items-start gap-4">
-                  <div className="bg-blue-50 p-3 rounded-2xl text-blue-600 shrink-0 shadow-inner"><svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg></div>
-                  <div className="flex-1"><h4 className="font-extrabold text-slate-900 text-sm mb-1">앱 다운로드 및 설치</h4><p className="text-xs text-slate-500 font-medium leading-relaxed">바탕화면에 아이콘을 추가하여 언제든 빠르게 실행하세요!</p></div>
+                  <div className="bg-blue-50 p-3 rounded-2xl text-blue-600 shrink-0 shadow-inner">
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="font-extrabold text-slate-900 text-sm mb-1">앱 다운로드 및 설치</h4>
+                    <p className="text-xs text-slate-500 font-medium leading-relaxed">바탕화면에 아이콘을 추가하여 언제든 빠르게 실행하세요!</p>
+                  </div>
                 </div>
                 <div className="flex gap-2 mt-4">
                   <button onClick={dismissInstall} className="flex-1 py-2.5 rounded-xl text-xs font-bold bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors active:scale-95">나중에</button>
@@ -787,29 +911,54 @@
               </div>
             )}
 
-            {/* 수동 앱 설치 안내 모달 */}
             {showInstallInstructions && (
               <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm z-[100] flex items-center justify-center p-4 animate-in fade-in duration-300">
                 <div className="bg-white rounded-[2.5rem] p-6 w-full max-w-sm shadow-2xl relative animate-in zoom-in-95 duration-300">
-                  <button onClick={() => setShowInstallInstructions(false)} className="absolute top-4 right-4 p-2 text-slate-400 hover:bg-slate-50 rounded-full transition-colors"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12"></path></svg></button>
+                  <button onClick={() => setShowInstallInstructions(false)} className="absolute top-4 right-4 p-2 text-slate-400 hover:bg-slate-50 rounded-full transition-colors">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12"></path></svg>
+                  </button>
+                  
                   <div className="text-center mb-6 mt-2">
-                    <div className="w-16 h-16 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-inner"><svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg></div>
-                    <h3 className="text-xl font-extrabold text-slate-900">홈 화면에 추가하는 방법</h3><p className="text-sm text-slate-500 mt-2 font-medium">기기에 따라 아래 방법을 따라해주세요.</p>
+                    <div className="w-16 h-16 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-inner">
+                      <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+                    </div>
+                    <h3 className="text-xl font-extrabold text-slate-900">홈 화면에 추가하는 방법</h3>
+                    <p className="text-sm text-slate-500 mt-2 font-medium">기기에 따라 아래 방법을 따라해주세요.</p>
                   </div>
+
                   <div className="space-y-4">
                     <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 shadow-sm">
-                      <h4 className="font-bold text-slate-800 text-sm mb-2 flex items-center gap-2"><svg className="w-4 h-4 text-slate-400" viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91 1.62.15 3.09.84 4.01 2.15-3.16 1.9-2.61 6.54.49 7.76-.75 1.83-1.68 3.5-2.71 4.75zM15.42 6.51c.71-.85 1.19-2.04 1.06-3.21-1.02.04-2.27.68-3 1.54-.65.77-1.23 2.01-1.07 3.15 1.13.09 2.3-.59 3.01-1.48z"/></svg>iPhone (Safari)</h4>
-                      <ol className="text-[13px] text-slate-600 space-y-2 pl-5 list-decimal font-medium"><li>화면 하단의 <b>공유</b> 버튼을 누릅니다.</li><li>메뉴를 올려서 <b>'홈 화면에 추가'</b>를 선택합니다.</li><li>우측 상단의 <b>'추가'</b>를 누릅니다.</li></ol>
+                      <h4 className="font-bold text-slate-800 text-sm mb-2 flex items-center gap-2">
+                        <svg className="w-4 h-4 text-slate-400" viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91 1.62.15 3.09.84 4.01 2.15-3.16 1.9-2.61 6.54.49 7.76-.75 1.83-1.68 3.5-2.71 4.75zM15.42 6.51c.71-.85 1.19-2.04 1.06-3.21-1.02.04-2.27.68-3 1.54-.65.77-1.23 2.01-1.07 3.15 1.13.09 2.3-.59 3.01-1.48z"/></svg>
+                        iPhone (Safari)
+                      </h4>
+                      <ol className="text-[13px] text-slate-600 space-y-2 pl-5 list-decimal font-medium">
+                        <li>화면 하단의 <span className="inline-flex p-1 bg-white border border-slate-200 rounded text-blue-500 shadow-sm align-middle mx-0.5"><svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg></span> <b>공유</b> 버튼을 누릅니다.</li>
+                        <li>메뉴를 올려서 <b>'홈 화면에 추가'</b>를 선택합니다.</li>
+                        <li>우측 상단의 <b>'추가'</b>를 누릅니다.</li>
+                      </ol>
                     </div>
+
                     <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 shadow-sm">
-                      <h4 className="font-bold text-slate-800 text-sm mb-2 flex items-center gap-2"><svg className="w-4 h-4 text-green-500" viewBox="0 0 24 24" fill="currentColor"><path d="M17.523 15.3414c-.5511 0-1.002-.451-1.002-1.0021 0-.5512.451-1.0022 1.002-1.0022.5512 0 1.0022.451 1.0022 1.0022 0 .5511-.451 1.0021-1.0022 1.0021m-11.046 0c-.5511 0-1.002-.451-1.002-1.0021 0-.5512.451-1.0022 1.002-1.0022.5511 0 1.0021.451 1.0021 1.0022 0 .5511-.451 1.0021-1.0021 1.0021m11.4045-6.023l1.844-3.1932c.1052-.1821.043-.4141-.1391-.5191-.1822-.1052-.4141-.0431-.5192.139l-1.8562 3.2152C15.7061 8.2435 13.9312 7.7634 12 7.7634c-1.9311 0-3.7062.4801-5.2112 1.1983L4.9328 5.7461c-.1052-.1821-.3371-.2442-.5191-.139-.1822.1051-.2443.3371-.1392.5191l1.8441 3.1932C2.6517 11.2386.3262 14.8845.021 19.3402h23.958c-.3052-4.4557-2.6307-8.1016-6.0975-10.0218"/></svg>Android (Chrome/Samsung)</h4>
-                      <ol className="text-[13px] text-slate-600 space-y-2 pl-5 list-decimal font-medium"><li>우측 하단/상단의 <b>메뉴(⋮ 또는 ≡)</b>를 누릅니다.</li><li><b>'홈 화면에 추가'</b> 또는 <b>'앱 설치'</b>를 선택합니다.</li><li>화면의 안내에 따라 <b>'설치'</b>를 누릅니다.</li></ol>
+                      <h4 className="font-bold text-slate-800 text-sm mb-2 flex items-center gap-2">
+                        <svg className="w-4 h-4 text-green-500" viewBox="0 0 24 24" fill="currentColor"><path d="M17.523 15.3414c-.5511 0-1.002-.451-1.002-1.0021 0-.5512.451-1.0022 1.002-1.0022.5512 0 1.0022.451 1.0022 1.0022 0 .5511-.451 1.0021-1.0022 1.0021m-11.046 0c-.5511 0-1.002-.451-1.002-1.0021 0-.5512.451-1.0022 1.002-1.0022.5511 0 1.0021.451 1.0021 1.0022 0 .5511-.451 1.0021-1.0021 1.0021m11.4045-6.023l1.844-3.1932c.1052-.1821.043-.4141-.1391-.5191-.1822-.1052-.4141-.0431-.5192.139l-1.8562 3.2152C15.7061 8.2435 13.9312 7.7634 12 7.7634c-1.9311 0-3.7062.4801-5.2112 1.1983L4.9328 5.7461c-.1052-.1821-.3371-.2442-.5191-.139-.1822.1051-.2443.3371-.1392.5191l1.8441 3.1932C2.6517 11.2386.3262 14.8845.021 19.3402h23.958c-.3052-4.4557-2.6307-8.1016-6.0975-10.0218"/></svg>
+                        Android (Chrome/Samsung)
+                      </h4>
+                      <ol className="text-[13px] text-slate-600 space-y-2 pl-5 list-decimal font-medium">
+                        <li>우측 하단/상단의 <span className="inline-flex px-1.5 py-0.5 bg-white border border-slate-200 rounded font-bold shadow-sm align-middle mx-0.5">⋮</span> 혹은 <b>≡</b> 메뉴를 누릅니다.</li>
+                        <li><b>'홈 화면에 추가'</b> 또는 <b>'앱 설치'</b>를 선택합니다.</li>
+                        <li>화면의 안내에 따라 <b>'설치(추가)'</b>를 누릅니다.</li>
+                      </ol>
                     </div>
                   </div>
-                  <button onClick={() => setShowInstallInstructions(false)} className="w-full mt-6 bg-slate-900 hover:bg-blue-600 text-white font-bold py-4 rounded-xl shadow-lg active:scale-[0.98] transition-all duration-300 text-sm">확인했습니다</button>
+                  
+                  <button onClick={() => setShowInstallInstructions(false)} className="w-full mt-6 bg-slate-900 hover:bg-blue-600 text-white font-bold py-4 rounded-xl shadow-lg active:scale-[0.98] transition-all duration-300 text-sm">
+                    확인했습니다
+                  </button>
                 </div>
               </div>
             )}
+
           </div>
         </div>
       );
