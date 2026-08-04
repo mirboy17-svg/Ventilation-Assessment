@@ -364,8 +364,12 @@
                 </div>
 
                 {/* PDF 렌더링용 히든 템플릿 (표 양식) */}
-                <div style={{ display: 'none', position: 'absolute', left: '-9999px', top: '0', width: '800px', backgroundColor: 'white', padding: '40px', boxSizing: 'border-box' }} ref={pdfTemplateRef}>
-                  <h1 style={{ fontSize: '32px', fontWeight: 'bold', textAlign: 'center', marginBottom: '30px', color: '#000' }}>맨홀 작업 일정 사전송부</h1>
+                <div style={{ display: 'none', position: 'absolute', left: '-9999px', top: '0', width: '800px', backgroundColor: 'white', padding: '10px 40px 40px 40px', boxSizing: 'border-box' }} ref={pdfTemplateRef}>
+                  <div style={{ textAlign: 'center', marginBottom: '15px', marginTop: '0px', fontSize: '13.5px', fontWeight: 'bold', color: '#DC2626', lineHeight: '1.4' }}>
+                    『맨홀 질식재해 예방 3대 안전수칙』 준수<br/>
+                    ① 산소 및 유해가스 측정! &nbsp; ② 충분한 환기! &nbsp; ③ 호흡보호구(송기마스크 등) 착용!
+                  </div>
+                  <h1 style={{ fontSize: '32px', fontWeight: 'bold', textAlign: 'center', marginBottom: '25px', color: '#000' }}>맨홀 작업 일정 사전송부</h1>
                   <div style={{ textAlign: 'left', marginBottom: '20px', fontSize: '18px', color: '#000', lineHeight: '1.8' }}>
                     <div><strong>수신자:</strong> {formData.receiver}</div>
                     <div style={{ marginTop: '10px' }}><strong>발신자:</strong> {formData.sender}</div>
@@ -405,16 +409,6 @@
                       <tr>
                         <th style={{ border: '1px solid black', backgroundColor: '#f3f4f6', padding: '12px', textAlign: 'center', verticalAlign: 'middle', fontWeight: 'bold' }}>입회자<br/>(담당 공무원)</th>
                         <td colSpan="3" style={{ border: '1px solid black', padding: '12px', wordBreak: 'break-word', whiteSpace: 'pre-wrap' }}>{formData.inspector}</td>
-                      </tr>
-                      <tr>
-                        <td colSpan="4" style={{ border: '1px solid black', padding: '24px 12px', textAlign: 'center', backgroundColor: '#fff' }}>
-                          <div style={{ fontSize: '22px', fontWeight: '900', marginBottom: '14px', color: '#000' }}>
-                            『맨홀 질식재해 예방 3대 안전수칙』 준수
-                          </div>
-                          <div style={{ fontSize: '17px', fontWeight: 'bold', color: '#000', letterSpacing: '-0.5px' }}>
-                            ①산소 및 유해가스 측정! &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ②충분한 환기! &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ③호흡보호구(송기마스크 등) 착용!
-                          </div>
-                        </td>
                       </tr>
                     </tbody>
                   </table>
