@@ -359,7 +359,7 @@
                     ))}
                   </div>
                   <div className="mt-6 text-right pr-2 pb-4">
-                    <span className="text-[11px] text-slate-400">※ 본 서식은 위험성평가 전 필수 송부용입니다.</span>
+                    <span className="text-[11px] text-slate-400">※ 본 서식은 맨홀 작업 전 필수 송부용입니다.</span>
                   </div>
                 </div>
 
@@ -419,7 +419,7 @@
                     </tbody>
                   </table>
                   <div style={{ marginTop: '12px', fontSize: '14.5px', fontWeight: 'bold', color: '#2563EB', textAlign: 'left' }}>
-                    ※ 관할 노동관서와 협의하여 자유로운 서식으로 오픈채팅방, 문자 등으로 송부 가능
+                          ※ 관할 노동관서와 협의하여 자유로운 서식으로 오픈채팅방, 문자 등으로 송부 가능
                   </div>
                 </div>
 
@@ -467,7 +467,7 @@
                     onClick={nextStep}
                     className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-2xl shadow-lg hover:shadow-blue-500/30 active:scale-[0.98] transition-all duration-300 text-lg"
                   >
-                    확인완료 및 다음단계로
+                    확인완료 및 자율점검으로
                   </button>
                 </div>
               </div>
@@ -479,7 +479,7 @@
                 <div className="mb-6">
                   <h2 className="text-2xl font-extrabold text-slate-900 mb-2 tracking-tight">맨홀 안전작업 체크리스트</h2>
                   <p className="text-slate-500 text-sm font-medium leading-relaxed">
-                    안전한 환기계산을 위해 아래 항목들을 꼼꼼히 확인해 주세요.
+                    안전한 맨홀 작업을 위해 아래 항목들을 꼼꼼히 확인해 주세요.
                   </p>
                 </div>
                 <div className="space-y-4 pb-4 text-left">
@@ -545,7 +545,7 @@
                   <p className="text-xs text-rose-700/90 leading-relaxed font-semibold">보유 배풍기 풍량이 <span className="bg-rose-200/50 px-1 rounded">5,000 m³/hr 이하</span>일 경우 정압은 <span className="bg-rose-200/50 px-1 rounded">40mmAq 미만</span>이 될 수 있으므로, <span className="text-rose-700 font-bold">풍량 5,000 m³/hr(또는 정압 40mmAq) 이상의 장비로 교체</span>하여 주시기 바랍니다.</p>
                 </div>
                 <div className="mt-auto pt-2 pb-4 bg-transparent shrink-0">
-                  <button onClick={nextStep} className="w-full bg-slate-900 hover:bg-blue-600 text-white font-bold py-4 rounded-2xl shadow-lg hover:shadow-blue-500/25 active:scale-[0.98] transition-all duration-300 text-lg">환기계산 진행하기</button>
+                  <button onClick={nextStep} className="w-full bg-slate-900 hover:bg-blue-600 text-white font-bold py-4 rounded-2xl shadow-lg hover:shadow-blue-500/25 active:scale-[0.98] transition-all duration-300 text-lg">맨홀공간 확인하기</button>
                 </div>
               </div>
             )}
@@ -554,7 +554,7 @@
             {step === 6 && (
               <div className="p-6 flex-1 flex flex-col animate-in slide-in-from-right-4 duration-500 ease-out overflow-y-auto custom-scrollbar">
                 <div className="mb-8">
-                  <h2 className="text-2xl font-extrabold text-slate-900 mb-2 tracking-tight">배풍기 풍량 입력</h2>
+                  <h2 className="text-2xl font-extrabold text-slate-900 mb-2 tracking-tight">보유 배풍기(환기팬) 풍량 확인</h2>
                   <p className="text-slate-500 text-sm font-medium leading-relaxed">현재 보유중인 배풍기(송풍기/포터블팬)의 성능을 입력해주세요.</p>
                 </div>
                 <div className="space-y-4">
@@ -583,11 +583,11 @@
               </div>
             )}
 
-            {/* Step 7: 공간 형태 선택 */}
+            {/* Step 7: 맨홀 공간 형태 선택 */}
             {step === 7 && (
               <div className="p-6 flex-1 flex flex-col animate-in slide-in-from-right-4 duration-500 ease-out">
                 <div className="mb-8">
-                  <h2 className="text-2xl font-extrabold text-slate-900 mb-2 tracking-tight">공간 형태 선택</h2>
+                  <h2 className="text-2xl font-extrabold text-slate-900 mb-2 tracking-tight">맨홀 공간 형태 선택</h2>
                   <p className="text-slate-500 text-sm font-medium leading-relaxed">작업하실 밀폐공간의 형태를 선택해주세요.</p>
                 </div>
                 <div className="space-y-4 mt-2">
@@ -619,11 +619,11 @@
               </div>
             )}
 
-            {/* Step 8: 공간 제원 입력 */}
+            {/* Step 8: 맨홀 제원 입력 */}
             {step === 8 && (
               <div className="p-6 flex-1 flex flex-col animate-in slide-in-from-right-4 duration-500 ease-out overflow-y-auto custom-scrollbar">
                 <div className="mb-6 shrink-0">
-                  <h2 className="text-2xl font-extrabold text-slate-900 mb-3 tracking-tight">{shape === 'rect' ? '직사각형' : shape === 'cyl' ? '원통형' : '결합형'} 제원 입력</h2>
+                  <h2 className="text-2xl font-extrabold text-slate-900 mb-3 tracking-tight">{shape === 'rect' ? '직사각형' : shape === 'cyl' ? '원통형' : '결합형'} 맨홀 제원 입력</h2>
                   <div className="inline-block bg-blue-50 px-3 py-1.5 rounded-lg border border-blue-100/50">
                     <p className="text-xs font-bold text-blue-600 tracking-wide">{shape === 'rect' ? '가로 × 세로 × 높이 = 체적(m³)' : shape === 'cyl' ? '(3.14 × 지름² / 4) × 높이 = 체적(m³)' : '직사각형 체적 + 원통형 체적 = 총 체적(m³)'}</p>
                   </div>
