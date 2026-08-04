@@ -320,7 +320,7 @@
               </header>
             )}
 
-            { }
+            {/* Step 1: 메인 화면 */}
             {step === 1 && (
               <div className="flex flex-col flex-1 pb-6 pt-10 animate-in fade-in duration-700 ease-out h-full max-h-[100dvh] relative">
 
@@ -329,7 +329,7 @@
                     안전보건공단 KOSHA GUIDE 기준
                   </span>
                   <h1 className="text-[2.2rem] font-extrabold text-slate-900 tracking-tight leading-tight">
-                    맨홀공간 환기 <br/>
+                    맨홀지킴이 환기 <br/>
                     <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-500">
                       위험성평가
                     </span>
@@ -358,20 +358,17 @@
                   </button>
                 </div>
 
-                <div className="w-full shrink-0 flex flex-col items-center justify-end opacity-90 px-6 pb-2 space-y-2.5">
+                <div className="w-full shrink-0 flex flex-col items-center justify-end opacity-90 px-6 pb-4">
                   <img src="image_bfaefe.png" alt="하단 로고" className="h-10 sm:h-12 object-contain" />
-                  <p className="text-[10px] text-slate-400 font-medium tracking-tight">
-                    &copy; Copyright 2026.08 aniag000@kiha21.or.kr. All rights reserved.
-                  </p>
                 </div>
               </div>
             )}
 
-            { }
+            {/* Step 2: 체크리스트 */}
             {step === 2 && (
               <div className="p-6 flex-1 flex flex-col animate-in slide-in-from-right-4 duration-500 ease-out">
-                <div className="mb-6">
-                  <h2 className="text-2xl font-extrabold text-slate-900 mb-2 tracking-tight">맨홀공간 환기 위험성평가 체크리스트</h2>
+                <div className="mb-6 text-center">
+                  <h2 className="text-2xl font-extrabold text-slate-900 mb-2 tracking-tight">맨홀공간 환기 체크리스트</h2>
                   <p className="text-slate-500 text-sm font-medium leading-relaxed">
                     안전한 환기계산을 위해 아래 항목들을 꼼꼼히 확인해 주세요.
                   </p>
@@ -431,7 +428,7 @@
               </div>
             )}
 
-            { }
+            {/* Step 3: 평가 리포트 */}
             {step === 3 && (
               <div className="p-6 flex-1 flex flex-col bg-[#F8FAFC] animate-in slide-in-from-right-4 duration-500 ease-out overflow-y-auto">
                 <div className="mb-6">
@@ -444,7 +441,7 @@
                 <div className="space-y-3 mb-6">
                   {[
                     { q: q1, title: '배풍기 풍량', pass: '풍량을 인지하고 있어 정확한 환기량 산출이 가능합니다.', fail: '장비 제원표를 반드시 확인하여 풍량을 파악하세요.' },
-                    { q: q2, title: '배풍기 정압', pass: '정압을 인지하고 있어 압력 손실 예측이 가능합니다.', fail: '제원표를 확인하여 압력 손실에 대비하세요.' },
+                    { q: q2, title: '배풍기 정압', pass: '정압을 인지하고 있어 압력 손실 예측이 가능합니다.', fail: '제원표를 확인하여 배풍기 정압 40mmAq 이상의 장비를 활용하세요.' },
                     { q: q3, title: '덕트 길이', pass: '기준을 준수하여 환기 효율 저하를 예방합니다.', fail: '길이를 줄이거나 고정압 배풍기를 사용하세요.' },
                     { q: q4, title: '덕트 하단 위치', pass: '효과적인 환기(급기)가 이루어질 수 있는 적절한 위치입니다.', fail: '사각지대 방지를 위해 덕트를 밀폐공간 하단으로 재조정하세요.' }
                   ].map((item, idx) => (
@@ -746,7 +743,7 @@
               </div>
             )}
 
-            {}
+            {/* Step 7: 결과 화면 */}
             {step === 7 && (
               <div className="flex-1 flex flex-col bg-[#F8FAFC] animate-in zoom-in-95 duration-500 ease-out overflow-y-auto custom-scrollbar">
                 
@@ -804,7 +801,7 @@
                           <li><span className="font-extrabold">배풍기 풍량 미확인:</span> 장비 제원표를 반드시 확인하여 정확한 환기량 산출이 가능하도록 파악하세요.</li>
                         )}
                         {q2 === 'no' && (
-                          <li><span className="font-extrabold">배풍기 정압 미확인:</span> 제원표를 확인하여 압력 손실에 대비하세요.</li>
+                          <li><span className="font-extrabold">배풍기 정압 미확인:</span> 제원표를 확인하여 배풍기 정압 40mmAq 이상의 장비를 활용하세요.</li>
                         )}
                         {q3 === 'no' && (
                           <li><span className="font-extrabold">덕트 길이 기준 초과:</span> 덕트 길이를 줄이거나 고정압 배풍기를 사용하여 환기 효율 저하를 예방하세요.</li>
