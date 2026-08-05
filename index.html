@@ -328,12 +328,12 @@
                     <img src="image_bf5001.jpg" alt="환기 예시 아이콘" className="absolute inset-0 w-full h-full object-contain p-8 md:p-12 transition-all" />
                   </div>
                 </div>
-                <div className="px-6 flex-1 flex flex-col justify-center my-auto w-full max-w-sm md:max-w-md mx-auto min-h-[100px]">
+                <div className="px-6 flex-1 flex flex-col justify-center my-auto w-full max-w-sm md:max-w-md mx-auto min-h-[100px] relative z-20">
                   <button onClick={nextStep} className="w-full bg-slate-900 hover:bg-blue-600 text-white font-bold py-[1.15rem] md:py-5 rounded-2xl md:rounded-3xl shadow-xl hover:shadow-blue-500/25 active:scale-[0.98] transition-all duration-300 text-lg md:text-xl">
                     사전송부 및 평가 시작
                   </button>
                 </div>
-                <div className="w-full shrink-0 flex flex-col items-center justify-end opacity-90 px-6 pb-4 md:absolute md:bottom-6 md:left-0 md:right-0">
+                <div className="w-full shrink-0 flex flex-col items-center justify-end opacity-90 px-6 pb-4 md:absolute md:bottom-6 md:left-0 md:right-0 pointer-events-none">
                   <img src="image_bfaefe.png" alt="하단 로고" className="h-10 sm:h-12 object-contain" />
                 </div>
               </div>
@@ -825,7 +825,32 @@
                       <h3 className="text-sm md:text-base font-black text-blue-600 tracking-tight mb-4 ml-1">맨홀공간 정보 요약</h3>
                       <div className="space-y-2 md:space-y-3 text-sm md:text-base flex-1">
                         <div className="flex justify-between items-center py-1.5 border-b border-slate-50"><span className="text-slate-500 font-medium">배풍기 풍량</span><span className="font-bold text-slate-800">{Number(fanCapacity).toLocaleString()} <span className="text-xs text-slate-400">m³/hr</span></span></div>
-                        <div className="flex justify-between items-center py-1.5 border-b border-slate-50"><span className="text-slate-500 font-medium">공간 형태</span><span className="font-bold text-slate-800">{shape === 'rect' ? '직사각형' : shape === 'cyl' ? '원통형' : '결합형 (직사각+원형)'}</span></div>
+                        
+                        <div className="flex justify-between items-start py-2 border-b border-slate-50">
+                          <span className="text-slate-500 font-medium shrink-0 mr-4 mt-0.5">공간 형태</span>
+                          <div className="font-bold text-slate-800 text-right leading-tight flex flex-col items-end">
+                            {shape === 'rect' && (
+                              <>
+                                <span>직사각형</span>
+                                <span className="text-[11px] md:text-[13px] text-slate-500 font-medium mt-1 break-keep">(가로: {width || 0}m, 세로: {length || 0}m, 높이: {height || 0}m)</span>
+                              </>
+                            )}
+                            {shape === 'cyl' && (
+                              <>
+                                <span>원통형</span>
+                                <span className="text-[11px] md:text-[13px] text-slate-500 font-medium mt-1 break-keep">(지름: {diameter || 0}m, 높이: {height || 0}m)</span>
+                              </>
+                            )}
+                            {shape === 'combo' && (
+                              <>
+                                <span>결합형</span>
+                                <span className="text-[11px] md:text-xs text-slate-500 font-medium mt-1 whitespace-nowrap">(사각: 가로 {comboRectWidth || 0}m, 세로 {comboRectLength || 0}m, 높이 {comboRectHeight || 0}m</span>
+                                <span className="text-[11px] md:text-xs text-slate-500 font-medium whitespace-nowrap">원형: 지름 {comboCylDiameter || 0}m, 높이 {comboCylHeight || 0}m)</span>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                        
                         <div className="flex justify-between items-center py-1.5 border-b border-slate-200"><span className="text-slate-500 font-medium">밀폐공간 체적</span><span className="font-bold text-slate-800">{volume.toFixed(2)} <span className="text-xs text-slate-400">m³</span></span></div>
                         
                         <div className="flex justify-between items-center py-1.5 border-b border-slate-50">
