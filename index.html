@@ -128,6 +128,9 @@
       const [q5, setQ5] = useState(null);
       const [q6, setQ6] = useState(null);
       const [q7, setQ7] = useState(null);
+      const [q8, setQ8] = useState(null);
+      const [q9, setQ9] = useState(null);
+      const [q10, setQ10] = useState(null);
 
       const [showInstallBanner, setShowInstallBanner] = useState(false);
       const [showInstallInstructions, setShowInstallInstructions] = useState(false);
@@ -216,7 +219,7 @@
         if (!resultRef.current) return;
         window.html2canvas(resultRef.current, { scale: 1.5, backgroundColor: '#F8FAFC' }).then(canvas => {
           const link = document.createElement('a');
-          link.download = `환기계산결과_${new Date().getTime()}.jpg`;
+          link.download = `맨홀작업점검표_${new Date().getTime()}.jpg`;
           link.href = canvas.toDataURL('image/jpeg', 0.7);
           link.click();
         });
@@ -259,7 +262,7 @@
         setFormData({ receiver: '', sender: '', companyName: '', representative: '', location: '', client: '', contact: '', workDate: '', workContent: '', otherInfo: '', remarks: '', inspector: '' });
         setFanCapacity(''); setShape(''); setWidth(''); setLength(''); setHeight(''); setDiameter('');
         setComboRectWidth(''); setComboRectLength(''); setComboRectHeight(''); setComboCylDiameter(''); setComboCylHeight('');
-        setQ1(null); setQ2(null); setQ3(null); setQ4(null); setQ5(null); setQ6(null); setQ7(null);
+        setQ1(null); setQ2(null); setQ3(null); setQ4(null); setQ5(null); setQ6(null); setQ7(null); setQ8(null); setQ9(null); setQ10(null);
       };
 
       return (
@@ -268,14 +271,19 @@
             
             {/* 진행률 헤더 (1페이지 제외) */}
             {step > 1 && step <= 9 && (
-              <header className="px-6 py-5 flex items-center bg-white/80 backdrop-blur-md sticky top-0 z-20 border-b border-slate-100/80">
-                <button onClick={prevStep} className="p-2 -ml-2 rounded-full hover:bg-slate-50 text-slate-600 transition-colors active:scale-95">
+              <header className="px-6 py-5 flex items-center bg-white/80 backdrop-blur-md sticky top-0 z-20 border-b border-slate-100/80 justify-between">
+                <button onClick={prevStep} className="p-2 -ml-2 rounded-full hover:bg-slate-50 text-slate-600 transition-colors active:scale-95 shrink-0">
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" /></svg>
                 </button>
-                <div className="w-full bg-slate-100 h-1.5 rounded-full ml-4 overflow-hidden">
-                  <div className="bg-blue-600 h-full rounded-full transition-all duration-500 ease-out" style={{ width: `${((step - 1) / 8) * 100}%` }}></div>
+                <div className="flex-1 flex items-center px-4">
+                  <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
+                    <div className="bg-blue-600 h-full rounded-full transition-all duration-500 ease-out" style={{ width: `${((step - 1) / 8) * 100}%` }}></div>
+                  </div>
+                  <span className="ml-3 text-xs font-bold text-slate-400 whitespace-nowrap">{step - 1} / 8</span>
                 </div>
-                <span className="ml-3 text-xs font-bold text-slate-400 whitespace-nowrap">{step - 1} / 8</span>
+                <button onClick={nextStep} disabled={step === 9} className={`p-2 -mr-2 rounded-full hover:bg-slate-50 text-slate-600 transition-colors active:scale-95 shrink-0 ${step === 9 ? 'opacity-0 cursor-default' : 'opacity-100'}`}>
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" /></svg>
+                </button>
               </header>
             )}
 
@@ -365,7 +373,7 @@
 
                 {/* PDF 렌더링용 히든 템플릿 (표 양식) */}
                 <div style={{ display: 'none', position: 'absolute', left: '-9999px', top: '0', width: '800px', backgroundColor: 'white', padding: '10px 40px 40px 40px', boxSizing: 'border-box' }} ref={pdfTemplateRef}>
-                  <div style={{ textAlign: 'center', marginBottom: '15px', marginTop: '0px', fontSize: '13.5px', fontWeight: 'bold', color: '#DC2626', lineHeight: '1.4' }}>
+                  <div style={{ textAlign: 'center', marginBottom: '15px', marginTop: '35px', fontSize: '13.5px', fontWeight: 'bold', color: '#DC2626', lineHeight: '1.4' }}>
                     『맨홀 질식재해 예방 3대 안전수칙』 준수<br/>
                     ① 산소 및 유해가스 측정! &nbsp; ② 충분한 환기! &nbsp; ③ 호흡보호구(송기마스크 등) 착용!
                   </div>
@@ -478,13 +486,16 @@
                 </div>
                 <div className="space-y-4 pb-4 text-left">
                   {[
-                    { qState: q1, setFn: setQ1, num: '1', text: '작업허가서 발급하셨나요?' },
-                    { qState: q2, setFn: setQ2, num: '2', text: '작업현황판 및 출입금지 게시하셨나요?' },
-                    { qState: q3, setFn: setQ3, num: '3', text: <>산소 및 유해가스 측정을 작업 전, <span className="text-red-600 font-black">작업 중에도</span> 하셨나요?</> },
-                    { qState: q4, setFn: setQ4, num: '4', text: <>환기팬 가동 및 <span className="text-red-600 font-black">보유 환기팬의 풍량(정압)을</span> 아시나요?</> },
-                    { qState: q5, setFn: setQ5, num: '5', text: '송기마스크 등 호흡용보호구 비치 하셨나요?' },
-                    { qState: q6, setFn: setQ6, num: '6', text: '구조장비 설치 및 감시인 배치 하셨나요?' },
-                    { qState: q7, setFn: setQ7, num: '7', text: '작업 전 안전교육(TBM) 실시하셨나요?' }
+                    { qState: q1, setFn: setQ1, num: '1', text: '해당 밀폐공간 위치파악, 유해위험요인(황화수소, CO2, 산소결핍 등) 파악 하셨나요?' },
+                    { qState: q2, setFn: setQ2, num: '2', text: '안전조치 사전확인을 위한 작업허가서 발급 및 작업장 게시 하셨나요?' },
+                    { qState: q3, setFn: setQ3, num: '3', text: '맨홀 밀폐공간 인근 잘보이는 곳에 출입금지 표지 게시 하셨나요?' },
+                    { qState: q4, setFn: setQ4, num: '4', text: <>산소 및 유해가스 측정을 작업 전, <span className="text-red-600 font-black">작업 중에도</span> 하셨나요?</> },
+                    { qState: q5, setFn: setQ5, num: '5', text: <>맨홀 작업 전, 작업 중 지속적으로 환기팬 가동 및 <span className="text-red-600 font-black">보유 환기팬의 풍량(정압)을</span> 아시나요?</> },
+                    { qState: q6, setFn: setQ6, num: '6', text: '송기마스크 등 호흡용보호구 비치 하셨나요?' },
+                    { qState: q7, setFn: setQ7, num: '7', text: '감시인을 배치하여 내외부간 연락 및 비상시 조치할 수 있도록 하셨나요?' },
+                    { qState: q8, setFn: setQ8, num: '8', text: '작업 전, 후 입장 및 퇴장 시 근로자 인원 점검을 하셨나요?' },
+                    { qState: q9, setFn: setQ9, num: '9', text: '작업 전 작업자 및 감시인에게 안전한 작업방법(TBM) 교육을 실시하셨나요?' },
+                    { qState: q10, setFn: setQ10, num: '10', text: '구조장비(삼각대, 무전기, 로프 등) 설치 및 긴급구조훈련을 실시하셨나요?' }
                   ].map((item, idx) => (
                     <div key={idx} className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm hover:border-blue-100 transition-colors">
                       <p className="font-bold text-slate-800 mb-4 text-sm leading-snug"><span className="text-blue-600 mr-1">{item.num}.</span> {item.text}</p>
@@ -496,7 +507,7 @@
                   ))}
                 </div>
                 <div className="mt-auto pt-4 pb-2 bg-transparent shrink-0">
-                  <button onClick={nextStep} disabled={!q1 || !q2 || !q3 || !q4 || !q5 || !q6 || !q7} className="w-full bg-blue-600 disabled:bg-slate-200 disabled:text-slate-400 text-white font-bold py-4 rounded-2xl shadow-lg hover:shadow-blue-500/30 disabled:shadow-none active:scale-[0.98] transition-all duration-300 text-lg">
+                  <button onClick={nextStep} disabled={!q1 || !q2 || !q3 || !q4 || !q5 || !q6 || !q7 || !q8 || !q9 || !q10} className="w-full bg-blue-600 disabled:bg-slate-200 disabled:text-slate-400 text-white font-bold py-4 rounded-2xl shadow-lg hover:shadow-blue-500/30 disabled:shadow-none active:scale-[0.98] transition-all duration-300 text-lg">
                     평가 리포트 확인
                   </button>
                 </div>
@@ -512,13 +523,16 @@
                 </div>
                 <div className="space-y-3 mb-6">
                   {[
-                    { q: q1, title: '작업허가서 발급', pass: '작업허가 절차를 준수하여 안전하게 작업을 진행합니다.', fail: '작업 전 반드시 작업허가서를 발급받고 승인을 득하세요.' },
-                    { q: q2, title: '작업현황판 및 출입금지 게시', pass: '작업 상황과 위험을 외부에서 명확히 인지할 수 있습니다.', fail: '출입구에 밀폐공간 출입금지 표지와 현황판을 게시하세요.' },
-                    { q: q3, title: '산소 및 유해가스 측정', pass: '지속적인 측정으로 안전한 공기 상태를 확인합니다.', fail: '작업 전은 물론 작업 중에도 지속적으로 농도를 측정하세요.' },
-                    { q: q4, title: '환기팬 가동 및 성능 확인', pass: '적절한 환기 조치 및 장비 성능 인지가 완료되었습니다.', fail: '배풍기 성능을 파악하고, 작업 전/중 충분한 환기를 실시하세요.' },
-                    { q: q5, title: '호흡용보호구 비치', pass: '비상 상황 및 구조 작업에 대비한 보호구가 준비되었습니다.', fail: '밀폐공간 작업용 송기마스크 또는 공기호흡기를 비치하세요.' },
-                    { q: q6, title: '구조장비 설치 및 감시인 배치', pass: '신속한 구조 체계 및 외부 감시가 원활히 이루어집니다.', fail: '전담 감시인을 배치하고 구출용 장비(삼각대 등)를 설치하세요.' },
-                    { q: q7, title: '작업 전 안전교육(TBM) 실시', pass: '작업자 모두가 위험 요인과 안전 수칙을 숙지하였습니다.', fail: '작업 전 위험예지(TBM)를 통해 안전한 작업방법을 교육하세요.' }
+                    { q: q1, title: '유해위험요인 파악', pass: '해당 공간의 위치와 위험요인을 정확히 파악했습니다.', fail: '작업 전 해당 장소의 위치와 위험요인을 명확히 파악하세요.' },
+                    { q: q2, title: '작업허가서 발급 및 게시', pass: '안전조치 사전확인 및 허가 절차를 준수하였습니다.', fail: '작업 전 반드시 작업허가서를 발급받고 작업장에 게시하세요.' },
+                    { q: q3, title: '출입금지 표지 게시', pass: '위험 지역에 대한 출입금지 표지를 게시하여 접근을 통제합니다.', fail: '인근 잘 보이는 곳에 출입금지 표지를 즉시 게시하세요.' },
+                    { q: q4, title: '산소 및 유해가스 측정', pass: '작업 전과 작업 중 지속적인 측정으로 안전을 확보합니다.', fail: '산소 및 유해가스를 작업 전은 물론 작업 중에도 지속적으로 측정하세요.' },
+                    { q: q5, title: '환기팬 가동 및 성능 확인', pass: '장비 성능을 인지하고 지속적인 환기를 실시합니다.', fail: '보유 배풍기 성능을 파악하고, 작업 전/중 환기를 지속적으로 실시하세요.' },
+                    { q: q6, title: '호흡용보호구 비치', pass: '비상 상황 및 구조 작업에 대비한 보호구가 준비되었습니다.', fail: '밀폐공간 작업용 송기마스크 등 호흡용보호구를 반드시 비치하세요.' },
+                    { q: q7, title: '감시인 배치 및 비상조치', pass: '내외부 연락 및 비상시 조치를 위한 감시인이 배치되었습니다.', fail: '전담 감시인을 배치하고 내외부 연락 및 비상 조치 체계를 마련하세요.' },
+                    { q: q8, title: '근로자 인원 점검', pass: '입장 및 퇴장 시 정확한 인원 점검이 이루어집니다.', fail: '출입 시 근로자 인원을 철저히 점검하여 인원 누락을 방지하세요.' },
+                    { q: q9, title: '안전교육(TBM) 실시', pass: '안전한 작업방법에 대한 사전 교육이 완료되었습니다.', fail: '작업 전 작업자와 감시인에게 안전한 작업방법(TBM)을 교육하세요.' },
+                    { q: q10, title: '구조장비 설치 및 훈련', pass: '비상 구조 장비 설치 및 긴급구조훈련을 실시하였습니다.', fail: '삼각대 등 구조장비를 설치하고 사전에 긴급구조훈련을 실시하세요.' }
                   ].map((item, idx) => (
                     <div key={idx} className={`p-4 rounded-2xl flex items-start gap-3 bg-white border border-slate-100 shadow-sm`}>
                       <div className={`mt-0.5 rounded-full p-1 ${item.q === 'yes' ? 'bg-blue-50 text-blue-600' : 'bg-rose-50 text-rose-500'}`}>
@@ -538,6 +552,38 @@
                   </div>
                   <p className="text-xs text-rose-700/90 leading-relaxed font-semibold">보유 배풍기 풍량이 <span className="bg-rose-200/50 px-1 rounded">5,000 m³/hr 이하</span>일 경우 정압은 <span className="bg-rose-200/50 px-1 rounded">40mmAq 미만</span>이 될 수 있으므로, <span className="text-rose-700 font-bold">풍량 5,000 m³/hr(또는 정압 40mmAq) 이상의 장비로 교체</span>하여 주시기 바랍니다.</p>
                 </div>
+                
+                {/* 동영상 가이드 QR 코드 영역 추가 */}
+                <div className="mb-6 flex gap-2 justify-center items-stretch">
+                  <a href="https://youtu.be/VxLudzI5DjU" target="_blank" rel="noopener noreferrer" className="flex-1 transition-transform hover:scale-105 active:scale-95">
+                    <div className="bg-white p-1.5 sm:p-2 rounded-xl border border-slate-200 shadow-sm text-center h-full flex flex-col justify-between">
+                      <div className="flex-1 flex flex-col items-center justify-center border border-slate-100 rounded-lg mb-1 bg-slate-50 overflow-hidden relative">
+                         <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://youtu.be/VxLudzI5DjU" alt="가스측정방법 QR" className="w-full p-1.5 object-contain mix-blend-multiply" />
+                         <div className="absolute bottom-0 inset-x-0 bg-slate-800/80 backdrop-blur-sm text-white text-[9px] sm:text-[10px] font-bold py-1">가스측정방법</div>
+                      </div>
+                      <span className="text-[10px] sm:text-[11px] font-bold text-slate-600 shrink-0">👆 영상 이동</span>
+                    </div>
+                  </a>
+                  <a href="https://youtu.be/qScYzPnQCTc" target="_blank" rel="noopener noreferrer" className="flex-1 transition-transform hover:scale-105 active:scale-95">
+                    <div className="bg-white p-1.5 sm:p-2 rounded-xl border border-slate-200 shadow-sm text-center h-full flex flex-col justify-between">
+                      <div className="flex-1 flex flex-col items-center justify-center border border-slate-100 rounded-lg mb-1 bg-slate-50 overflow-hidden relative">
+                         <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://youtu.be/qScYzPnQCTc" alt="환기방법 QR" className="w-full p-1.5 object-contain mix-blend-multiply" />
+                         <div className="absolute bottom-0 inset-x-0 bg-slate-800/80 backdrop-blur-sm text-white text-[9px] sm:text-[10px] font-bold py-1">환기방법</div>
+                      </div>
+                      <span className="text-[10px] sm:text-[11px] font-bold text-slate-600 shrink-0">👆 영상 이동</span>
+                    </div>
+                  </a>
+                  <a href="https://www.youtube.com/watch?v=pjrIZcxkjTA" target="_blank" rel="noopener noreferrer" className="flex-1 transition-transform hover:scale-105 active:scale-95">
+                    <div className="bg-white p-1.5 sm:p-2 rounded-xl border border-slate-200 shadow-sm text-center h-full flex flex-col justify-between">
+                      <div className="flex-1 flex flex-col items-center justify-center border border-slate-100 rounded-lg mb-1 bg-slate-50 overflow-hidden relative">
+                         <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://youtu.be/pjrIZcxkjTA" alt="맨홀질식예방 QR" className="w-full p-1.5 object-contain mix-blend-multiply" />
+                         <div className="absolute bottom-0 inset-x-0 bg-slate-800/80 backdrop-blur-sm text-white text-[9px] sm:text-[10px] font-bold py-1">맨홀질식예방</div>
+                      </div>
+                      <span className="text-[10px] sm:text-[11px] font-bold text-slate-600 shrink-0">👆 영상 이동</span>
+                    </div>
+                  </a>
+                </div>
+
                 <div className="mt-auto pt-2 pb-4 bg-transparent shrink-0">
                   <button onClick={nextStep} className="w-full bg-slate-900 hover:bg-blue-600 text-white font-bold py-4 rounded-2xl shadow-lg hover:shadow-blue-500/25 active:scale-[0.98] transition-all duration-300 text-lg">맨홀공간 확인하기</button>
                 </div>
@@ -585,19 +631,19 @@
                   <p className="text-slate-500 text-sm font-medium leading-relaxed">작업하실 밀폐공간의 형태를 선택해주세요.</p>
                 </div>
                 <div className="space-y-4 mt-2">
-                  <button onClick={() => { setShape('rect'); nextStep(); }} className="w-full bg-white border border-slate-200 hover:border-blue-500 hover:bg-blue-50/50 p-6 rounded-[1.5rem] flex items-center shadow-sm hover:shadow-md transition-all duration-300 group">
-                    <div className="w-14 h-14 bg-slate-50 group-hover:bg-white rounded-2xl flex items-center justify-center mr-5 shadow-inner transition-colors"><div className="w-7 h-5 border-[3px] border-slate-400 group-hover:border-blue-500 rounded-sm transition-colors"></div></div>
-                    <div className="text-left">
-                      <h3 className="text-lg font-bold text-slate-800 group-hover:text-blue-700 transition-colors">직사각형</h3>
-                      <p className="text-xs text-slate-400 mt-1 font-medium">가로, 세로, 높이 기반</p>
-                    </div>
-                    <div className="ml-auto opacity-0 group-hover:opacity-100 text-blue-500 transition-opacity"><svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg></div>
-                  </button>
                   <button onClick={() => { setShape('cyl'); nextStep(); }} className="w-full bg-white border border-slate-200 hover:border-blue-500 hover:bg-blue-50/50 p-6 rounded-[1.5rem] flex items-center shadow-sm hover:shadow-md transition-all duration-300 group">
                     <div className="w-14 h-14 bg-slate-50 group-hover:bg-white rounded-2xl flex items-center justify-center mr-5 shadow-inner transition-colors"><div className="w-6 h-6 border-[3px] border-slate-400 group-hover:border-blue-500 rounded-full transition-colors"></div></div>
                     <div className="text-left">
                       <h3 className="text-lg font-bold text-slate-800 group-hover:text-blue-700 transition-colors">원통형(원형)</h3>
                       <p className="text-xs text-slate-400 mt-1 font-medium">지름, 높이 기반</p>
+                    </div>
+                    <div className="ml-auto opacity-0 group-hover:opacity-100 text-blue-500 transition-opacity"><svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg></div>
+                  </button>
+                  <button onClick={() => { setShape('rect'); nextStep(); }} className="w-full bg-white border border-slate-200 hover:border-blue-500 hover:bg-blue-50/50 p-6 rounded-[1.5rem] flex items-center shadow-sm hover:shadow-md transition-all duration-300 group">
+                    <div className="w-14 h-14 bg-slate-50 group-hover:bg-white rounded-2xl flex items-center justify-center mr-5 shadow-inner transition-colors"><div className="w-7 h-5 border-[3px] border-slate-400 group-hover:border-blue-500 rounded-sm transition-colors"></div></div>
+                    <div className="text-left">
+                      <h3 className="text-lg font-bold text-slate-800 group-hover:text-blue-700 transition-colors">직사각형</h3>
+                      <p className="text-xs text-slate-400 mt-1 font-medium">가로, 세로, 높이 기반</p>
                     </div>
                     <div className="ml-auto opacity-0 group-hover:opacity-100 text-blue-500 transition-opacity"><svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg></div>
                   </button>
@@ -703,7 +749,27 @@
                     <div className="space-y-2 text-sm">
                       <div className="flex justify-between items-center py-1.5 border-b border-slate-50"><span className="text-slate-500 font-medium">배풍기 풍량</span><span className="font-bold text-slate-800">{Number(fanCapacity).toLocaleString()} <span className="text-xs text-slate-400">m³/hr</span></span></div>
                       <div className="flex justify-between items-center py-1.5 border-b border-slate-50"><span className="text-slate-500 font-medium">공간 형태</span><span className="font-bold text-slate-800">{shape === 'rect' ? '직사각형' : shape === 'cyl' ? '원통형' : '결합형 (직사각+원형)'}</span></div>
-                      <div className="flex justify-between items-center py-1.5"><span className="text-slate-500 font-medium">밀폐공간 체적</span><span className="font-bold text-blue-600">{volume.toFixed(2)} <span className="text-xs text-slate-400">m³</span></span></div>
+                      <div className="flex justify-between items-center py-1.5 border-b border-slate-200"><span className="text-slate-500 font-medium">밀폐공간 체적</span><span className="font-bold text-slate-800">{volume.toFixed(2)} <span className="text-xs text-slate-400">m³</span></span></div>
+                      
+                      <div className="flex justify-between items-center py-1.5 border-b border-slate-50">
+                        <span className="text-slate-500 font-medium">작업 전 환기시간</span>
+                        <span className="font-bold text-slate-800">{ventTime} <span className="text-xs text-slate-400">분 {isMinimumForced ? '(이상)' : ''}</span></span>
+                      </div>
+                      <div className="flex justify-between items-center py-1.5">
+                        <span className="text-slate-500 font-medium">작업 중 환기 가동 대수</span>
+                        <span className="font-bold text-slate-800">{displayFanCount}</span>
+                      </div>
+                    </div>
+                    
+                    <div className="mt-4 space-y-2">
+                      <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
+                         <p className="text-[11px] text-slate-500 font-medium leading-relaxed">⚠️ 이론적 환기시간은 {Math.ceil(rawVentTime)}분이나, 작업 전 반드시 <strong className="text-slate-700">30분 이상 급기</strong>를 실시바랍니다. <br/><span className="text-[10px] text-slate-400">(※ 밀폐공간 체적 10배 급기, 배풍기 효율 80% 적용)</span></p>
+                      </div>
+                      {rawFanCount > 1 && (
+                        <div className="bg-rose-50 p-3 rounded-xl border border-rose-100">
+                          <p className="text-[11px] text-rose-600 font-extrabold leading-relaxed">⚠️ 현재 배풍기를 해당 대수만큼 추가하여 환기 실시 바랍니다. <br/><span className="text-[10px] text-rose-400/80">(※ 시간당 20회 환기 적용 기준)</span></p>
+                        </div>
+                      )}
                     </div>
                   </div>
 
@@ -711,13 +777,16 @@
                     <h3 className="text-sm font-black text-blue-600 tracking-tight mb-3 ml-1">안전작업 체크리스트 결과</h3>
                     <div className="space-y-2">
                       {[ 
-                        { q: q1, title: '1. 작업허가서 발급' }, 
-                        { q: q2, title: '2. 작업현황판/출입금지 게시' }, 
-                        { q: q3, title: '3. 산소 및 유해가스 측정' }, 
-                        { q: q4, title: '4. 환기팬 가동 및 성능 확인' },
-                        { q: q5, title: '5. 호흡용보호구 비치' },
-                        { q: q6, title: '6. 구조장비 및 감시인 배치' },
-                        { q: q7, title: '7. 작업 전 안전교육(TBM)' }
+                        { q: q1, title: '1. 공간 위치 및 유해위험 파악' }, 
+                        { q: q2, title: '2. 작업허가서 발급 및 게시' }, 
+                        { q: q3, title: '3. 출입금지 표지 게시' }, 
+                        { q: q4, title: '4. 산소/유해가스 작업전·중 측정' },
+                        { q: q5, title: '5. 환기팬 가동 및 성능 확인' },
+                        { q: q6, title: '6. 호흡용보호구 비치' },
+                        { q: q7, title: '7. 감시인 배치 및 비상체계' },
+                        { q: q8, title: '8. 입·퇴장 인원 점검' },
+                        { q: q9, title: '9. 안전방법(TBM) 교육' },
+                        { q: q10, title: '10. 구조장비 설치/구조훈련' }
                       ].map((item, idx) => (
                         <div key={idx} className="flex justify-between items-center py-2 border-b border-slate-50 last:border-0">
                           <span className="text-slate-600 text-[13px] font-medium">{item.title}</span>
@@ -727,38 +796,24 @@
                     </div>
                   </div>
 
-                  {(fanHr < 5000 || q1 === 'no' || q2 === 'no' || q3 === 'no' || q4 === 'no' || q5 === 'no' || q6 === 'no' || q7 === 'no') && (
+                  {(fanHr < 5000 || q1 === 'no' || q2 === 'no' || q3 === 'no' || q4 === 'no' || q5 === 'no' || q6 === 'no' || q7 === 'no' || q8 === 'no' || q9 === 'no' || q10 === 'no') && (
                     <div className="bg-rose-50 border border-rose-100 rounded-2xl p-5 shadow-sm">
                       <h4 className="text-rose-800 font-bold text-sm mb-3 flex items-center gap-2"><svg className="w-5 h-5 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>개선조치사항</h4>
                       <ul className="text-xs text-rose-700/90 leading-relaxed font-semibold space-y-2 list-disc pl-4">
                         {fanHr < 5000 && <li>덕트 내 압력 손실로 인한 환기 불량을 방지하기 위해, 배풍기는 최소 풍량 5,000 m³/hr(또는 정압 40 mmAq) 이상의 사양을 사용하여 주시기 바랍니다.</li>}
-                        {q1 === 'no' && <li><span className="font-extrabold">작업허가서 미발급:</span> 작업 전 반드시 작업허가서를 발급받고 허가권자의 승인을 득하세요.</li>}
-                        {q2 === 'no' && <li><span className="font-extrabold">현황판/표지 미게시:</span> 출입구에 밀폐공간 출입금지 표지와 작업현황판을 즉시 게시하세요.</li>}
-                        {q3 === 'no' && <li><span className="font-extrabold">가스측정 미흡:</span> 작업 전뿐만 아니라 작업 중에도 수시로 산소 및 유해가스 농도를 측정하세요.</li>}
-                        {q4 === 'no' && <li><span className="font-extrabold">환기팬/성능 미확인:</span> 장비 제원표를 확인하여 배풍기 성능을 파악하고 즉시 환기팬을 가동하세요.</li>}
-                        {q5 === 'no' && <li><span className="font-extrabold">보호구 미비치:</span> 밀폐공간 내부 작업 시 사용할 송기마스크 또는 공기호흡기를 반드시 비치하세요.</li>}
-                        {q6 === 'no' && <li><span className="font-extrabold">구조장비/감시인 누락:</span> 전담 감시인을 배치하고 구출용 삼각대, 윈치 등 구조장비를 즉각 설치하세요.</li>}
-                        {q7 === 'no' && <li><span className="font-extrabold">안전교육(TBM) 미실시:</span> 작업 전 위험예지(TBM)를 통해 안전한 작업방법과 보호구 착용법을 주지시키세요.</li>}
+                        {q1 === 'no' && <li><span className="font-extrabold">유해위험 파악 미흡:</span> 작업 전 해당 장소의 위치와 위험요인을 명확히 파악하세요.</li>}
+                        {q2 === 'no' && <li><span className="font-extrabold">작업허가서 미발급:</span> 작업 전 반드시 허가서를 발급받고 작업장에 게시하세요.</li>}
+                        {q3 === 'no' && <li><span className="font-extrabold">표지 미게시:</span> 인근 잘 보이는 곳에 출입금지 표지를 즉시 게시하세요.</li>}
+                        {q4 === 'no' && <li><span className="font-extrabold">가스측정 미흡:</span> 산소 및 유해가스를 작업 전은 물론 작업 중에도 지속적으로 측정하세요.</li>}
+                        {q5 === 'no' && <li><span className="font-extrabold">환기팬/성능 미확인:</span> 보유 배풍기 성능을 파악하고, 작업 전/중 환기를 지속적으로 실시하세요.</li>}
+                        {q6 === 'no' && <li><span className="font-extrabold">보호구 미비치:</span> 밀폐공간 작업용 송기마스크 등 호흡용보호구를 반드시 비치하세요.</li>}
+                        {q7 === 'no' && <li><span className="font-extrabold">감시/비상체계 누락:</span> 전담 감시인을 배치하고 내외부 연락 및 비상 조치 체계를 마련하세요.</li>}
+                        {q8 === 'no' && <li><span className="font-extrabold">인원점검 누락:</span> 출입 시 근로자 인원을 철저히 점검하여 인원 누락을 방지하세요.</li>}
+                        {q9 === 'no' && <li><span className="font-extrabold">안전교육(TBM) 미실시:</span> 작업 전 작업자와 감시인에게 안전한 작업방법(TBM)을 교육하세요.</li>}
+                        {q10 === 'no' && <li><span className="font-extrabold">장비/훈련 미흡:</span> 삼각대 등 구조장비를 설치하고 사전에 긴급구조훈련을 실시하세요.</li>}
                       </ul>
                     </div>
                   )}
-
-                  <div className="space-y-4">
-                    <div className="bg-gradient-to-br from-blue-600 to-cyan-500 rounded-2xl p-6 shadow-lg shadow-blue-500/20 text-white relative overflow-hidden">
-                      <div className="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-white/10 rounded-full blur-2xl"></div>
-                      <h3 className="text-white font-extrabold text-[1.15rem] mb-1 tracking-tight">1. (작업 전) 환기시간</h3>
-                      <p className="text-[10px] text-blue-200/80 mb-4 font-semibold tracking-wide">※ 밀폐공간 체적 10배 급기, 배풍기 효율 80% 기준</p>
-                      <div className="flex items-baseline gap-1.5 mt-2"><span className="text-5xl font-black tracking-tighter">{ventTime}</span><span className="text-lg font-bold text-blue-100">min (분)</span>{isMinimumForced && <span className="ml-1 text-sm font-bold text-blue-200">이상</span>}</div>
-                      <div className="mt-4 bg-black/15 p-3.5 rounded-xl border border-white/10 backdrop-blur-sm"><p className="text-xs text-blue-50 font-medium leading-relaxed">⚠️ 주의: 이론적 환기시간은 {Math.ceil(rawVentTime)}분이나, 작업 전 반드시 <strong className="text-white">30분 이상 급기</strong>를 실시바랍니다.</p></div>
-                    </div>
-                    <div className="bg-gradient-to-br from-blue-600 to-cyan-500 rounded-2xl p-6 shadow-lg shadow-blue-500/20 text-white relative overflow-hidden">
-                      <div className="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-white/10 rounded-full blur-2xl"></div>
-                      <h3 className="text-white font-extrabold text-[1.15rem] mb-1 tracking-tight">2. (작업 중) 배풍기 환기 가동 대수</h3>
-                      <p className="text-[10px] text-blue-200/80 mb-4 font-semibold tracking-wide">※ 시간당 20회 환기, 배풍기 효율 80% 적용 기준</p>
-                      <div className="flex items-baseline gap-2 mt-1"><span className="text-5xl font-black tracking-tighter">{displayFanCount}</span></div>
-                      {rawFanCount > 1 && <div className="mt-4 bg-white/95 p-3.5 rounded-xl border border-rose-100 shadow-sm backdrop-blur-sm"><p className="text-[13px] text-rose-600 font-extrabold leading-relaxed">⚠️ 현재 배풍기를 해당 대수만큼 추가하여 환기 실시 바랍니다.</p></div>}
-                    </div>
-                  </div>
                 </div>
                 <div className="px-6 pt-2 pb-6 space-y-3 shrink-0">
                   <button onClick={saveAsImage} className="w-full bg-slate-800 hover:bg-slate-700 text-white font-bold py-4 rounded-2xl shadow-lg active:scale-[0.98] transition-all duration-300 text-sm flex items-center justify-center gap-2"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>종합결과 이미지로 저장하기</button>
