@@ -7,14 +7,14 @@
   
   <!-- Open Graph / 카카오톡, 페이스북, 밴드 등 링크 공유 썸네일(미리보기) 설정 -->
   <meta property="og:type" content="website" />
-  <meta property="og:title" content="맨홀작업 - 안전지킴이" />
+  <meta property="og:title" content="맨홀지킴이 - 공간 환기계산 앱" />
   <meta property="og:description" content="맨홀 작업 전 필수 안전조치 확인, 사전일정 송부 및 정확한 환기량 계산을 지원합니다." />
   <meta property="og:image" content="image_bf5001.jpg" />
   <meta property="og:url" content="" />
   
   <!-- 트위터(X) 등 기타 플랫폼 공유 썸네일 설정 -->
   <meta name="twitter:card" content="summary" />
-  <meta name="twitter:title" content="맨홀작업 - 안전지킴이" />
+  <meta name="twitter:title" content="맨홀지킴이 - 공간 환기계산 앱" />
   <meta name="twitter:description" content="맨홀 작업 전 필수 안전조치 확인, 사전일정 송부 및 정확한 환기량 계산을 지원합니다." />
   <meta name="twitter:image" content="image_bf5001.jpg" />
 
@@ -347,6 +347,9 @@
                       { num: '5', label: '소재지(맨홀위치)', name: 'location', placeholder: '상세 위치 입력' },
                       { num: '6', label: '발주자', name: 'client', placeholder: '입력하세요' },
                       { num: '7', label: '현장 연락처', name: 'contact', placeholder: '핸드폰 등 입력' },
+                      { num: '8', label: '작업 일시', name: 'workDate', placeholder: '예: 2024.10.12 09:00~18:00' },
+                      { num: '9', label: '작업 내용', name: 'workContent', placeholder: '구체적인 작업 내용 입력' },
+                      { num: '10', label: '기타(호흡용보호구 등)', name: 'otherInfo', placeholder: '보유장비, 특기사항 등' }
                     ].map(item => (
                       <div key={item.name} className="flex items-start border-b border-slate-300 py-3 hover:bg-slate-50/50 transition-colors">
                         <span className="font-bold text-slate-700 text-[13.5px] w-[145px] shrink-0 mt-0.5">{item.num}. {item.label}</span>
@@ -354,25 +357,11 @@
                         <textarea name={item.name} value={formData[item.name]} onChange={(e) => { handleInputChange(e); e.target.style.height = 'auto'; e.target.style.height = e.target.scrollHeight + 'px'; }} rows="1" className="flex-1 w-full px-1 py-0.5 outline-none text-[13.5px] font-medium focus:bg-blue-50/50 bg-transparent text-slate-900 resize-none overflow-hidden break-words whitespace-pre-wrap" placeholder={item.placeholder} />
                       </div>
                     ))}
-                    <div className="py-2.5 pt-4">
-                      <span className="font-extrabold text-slate-800 text-[14px]">8. 작업정보</span>
-                    </div>
                     {[
-                      { num: '8-1', label: '작업일시', name: 'workDate', placeholder: '예: 2026.08.10 13:00~17:00' },
-                      { num: '8-2', label: '작업내용', name: 'workContent', placeholder: '작업 상세 내용 입력' },
-                      { num: '8-3', label: '기타', name: 'otherInfo', placeholder: '기타 작업정보 입력' }
+                      { num: '11', label: '특이사항', name: 'remarks', placeholder: '특이사항 입력' },
+                      { num: '12', label: '입회자(담당공무원)', name: 'inspector', placeholder: '입력하세요' }
                     ].map(item => (
-                      <div key={item.name} className="flex items-start border-b border-slate-200 py-3 ml-4 hover:bg-slate-50/50 transition-colors">
-                        <span className="font-bold text-slate-600 text-[13.5px] w-[129px] shrink-0 mt-0.5">{item.num}. {item.label}</span>
-                        <span className="text-slate-400 mr-2 mt-0.5">:</span>
-                        <textarea name={item.name} value={formData[item.name]} onChange={(e) => { handleInputChange(e); e.target.style.height = 'auto'; e.target.style.height = e.target.scrollHeight + 'px'; }} rows="1" className="flex-1 w-full px-1 py-0.5 outline-none text-[13.5px] font-medium focus:bg-blue-50/50 bg-transparent text-slate-900 resize-none overflow-hidden break-words whitespace-pre-wrap" placeholder={item.placeholder} />
-                      </div>
-                    ))}
-                    {[
-                      { num: '9', label: '특이사항', name: 'remarks', placeholder: '특이사항 입력' },
-                      { num: '10', label: '입회자(담당공무원)', name: 'inspector', placeholder: '입력하세요' }
-                    ].map(item => (
-                      <div key={item.name} className={`flex items-start border-b border-slate-300 py-3 hover:bg-slate-50/50 transition-colors ${item.num === '9' ? 'pt-4' : ''}`}>
+                      <div key={item.name} className={`flex items-start border-b border-slate-300 py-3 hover:bg-slate-50/50 transition-colors ${item.num === '11' ? 'pt-4' : ''}`}>
                         <span className="font-bold text-slate-700 text-[13.5px] w-[145px] shrink-0 mt-0.5">{item.num}. {item.label}</span>
                         <span className="text-slate-400 mr-2 mt-0.5">:</span>
                         <textarea name={item.name} value={formData[item.name]} onChange={(e) => { handleInputChange(e); e.target.style.height = 'auto'; e.target.style.height = e.target.scrollHeight + 'px'; }} rows="1" className="flex-1 w-full px-1 py-0.5 outline-none text-[13.5px] font-medium focus:bg-blue-50/50 bg-transparent text-slate-900 resize-none overflow-hidden break-words whitespace-pre-wrap" placeholder={item.placeholder} />
@@ -441,7 +430,7 @@
                 <div className="mt-auto px-6 pt-4 pb-6 bg-[#F8FAFC] space-y-3 shrink-0 border-t border-slate-100">
                   <button onClick={saveAsPDF} className="w-full bg-slate-800 hover:bg-slate-700 text-white font-bold py-4 rounded-2xl shadow-lg active:scale-[0.98] transition-all duration-300 text-sm flex items-center justify-center gap-2">
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
-                    작성 서식 저용량 PDF 다운로드
+                    작성 서식 PDF 생성 및 공유하기 (카카오톡 등)
                   </button>
                   <button onClick={nextStep} className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-2xl shadow-lg hover:shadow-blue-500/25 active:scale-[0.98] transition-all duration-300 text-lg">
                     가이드 확인 진행
@@ -478,6 +467,17 @@
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
                     동영상 촬영가이드 다운로드
                   </button>
+                  
+                  {/* 동영상 촬영 앱 호출을 위한 숨겨진 input 및 라벨 버튼 */}
+                  <input type="file" accept="video/*" capture="environment" id="videoCapture" className="hidden" />
+                  <label
+                    htmlFor="videoCapture"
+                    className="w-full bg-rose-600 hover:bg-rose-700 text-white font-bold py-4 rounded-2xl shadow-lg active:scale-[0.98] transition-all duration-300 text-sm flex items-center justify-center gap-2 cursor-pointer m-0"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
+                    동영상 촬영하기
+                  </label>
+
                   <button
                     onClick={nextStep}
                     className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-2xl shadow-lg hover:shadow-blue-500/30 active:scale-[0.98] transition-all duration-300 text-lg"
