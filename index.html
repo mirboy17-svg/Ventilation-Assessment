@@ -5,6 +5,19 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>맨홀지킴이</title>
   
+  <!-- Open Graph / 카카오톡, 페이스북, 밴드 등 링크 공유 썸네일(미리보기) 설정 -->
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="맨홀지킴이 - 공간 환기계산 앱" />
+  <meta property="og:description" content="맨홀 작업 전 필수 안전조치 확인, 사전일정 송부 및 정확한 환기량 계산을 지원합니다." />
+  <meta property="og:image" content="image_bf5001.jpg" />
+  <meta property="og:url" content="" />
+  
+  <!-- 트위터(X) 등 기타 플랫폼 공유 썸네일 설정 -->
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="맨홀지킴이 - 공간 환기계산 앱" />
+  <meta name="twitter:description" content="맨홀 작업 전 필수 안전조치 확인, 사전일정 송부 및 정확한 환기량 계산을 지원합니다." />
+  <meta name="twitter:image" content="image_bf5001.jpg" />
+
   <!-- 카카오톡 인앱 브라우저 감지 및 외부 브라우저(크롬/사파리) 강제 호출 스크립트 -->
   <script>
     var userAgent = navigator.userAgent.toLowerCase();
@@ -219,7 +232,7 @@
         if (!resultRef.current) return;
         window.html2canvas(resultRef.current, { scale: 1.5, backgroundColor: '#F8FAFC' }).then(canvas => {
           const link = document.createElement('a');
-          link.download = `맨홀작업점검표_${new Date().getTime()}.jpg`;
+          link.download = `환기계산결과_${new Date().getTime()}.jpg`;
           link.href = canvas.toDataURL('image/jpeg', 0.7);
           link.click();
         });
