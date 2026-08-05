@@ -8,14 +8,14 @@
   <!-- Open Graph / 카카오톡, 페이스북, 밴드 등 링크 공유 썸네일(미리보기) 설정 -->
   <meta property="og:type" content="website" />
   <meta property="og:title" content="맨홀지킴이 - 공간 환기계산 앱" />
-  <meta property="og:description" content="맨홀 작업 전 필수 안전조치 확인, 사전일정 송부 및 정확한 환기량 계산을 지원합니다." />
+  <meta property="og:description" content="맨홀 작업 전 사전일정 송부 및 안전점검을 지원합니다." />
   <meta property="og:image" content="image_bf5001.jpg" />
   <meta property="og:url" content="" />
   
   <!-- 트위터(X) 등 기타 플랫폼 공유 썸네일 설정 -->
   <meta name="twitter:card" content="summary" />
   <meta name="twitter:title" content="맨홀지킴이 - 공간 환기계산 앱" />
-  <meta name="twitter:description" content="맨홀 작업 전 필수 안전조치 확인, 사전일정 송부 및 정확한 환기량 계산을 지원합니다." />
+  <meta name="twitter:description" content="맨홀 작업 전 사전일정 송부 및 안전점검을 지원합니다" />
   <meta name="twitter:image" content="image_bf5001.jpg" />
 
   <!-- 카카오톡 인앱 브라우저 감지 및 외부 브라우저(크롬/사파리) 강제 호출 스크립트 -->
@@ -431,7 +431,7 @@
                 <div className="mt-auto px-6 pt-4 pb-6 bg-[#F8FAFC] space-y-3 shrink-0 border-t border-slate-100 md:flex md:space-y-0 md:gap-4 md:justify-center md:px-10">
                   <button onClick={saveAsPDF} className="w-full md:w-1/2 bg-slate-800 hover:bg-slate-700 text-white font-bold py-4 rounded-2xl shadow-lg active:scale-[0.98] transition-all duration-300 text-sm md:text-base flex items-center justify-center gap-2">
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
-                    서식 PDF 저장 및 공유
+                    맨홀 작업 일정 다운로드 후 공유하세요
                   </button>
                   <button onClick={nextStep} className="w-full md:w-1/2 bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-2xl shadow-lg hover:shadow-blue-500/25 active:scale-[0.98] transition-all duration-300 text-lg md:text-xl">
                     가이드 확인 진행
@@ -446,7 +446,7 @@
                 <div className="p-6 pb-4 shrink-0 bg-white border-b border-slate-100 shadow-sm z-10 relative text-center">
                   <h2 className="text-2xl md:text-3xl font-extrabold text-slate-900 mb-2 tracking-tight transition-all">질식사고예방 사전준비 확인사항</h2>
                   <p className="text-slate-500 text-sm md:text-base font-medium leading-relaxed">
-                    작업 전 필수 안전조치 사항을 이미지로 한눈에 확인하세요.
+                    작업 전 필수 안전조치 및 동영상 촬영 가이드 확인한 후 휴대폰으로 촬영하세요.
                   </p>
                 </div>
 
@@ -454,7 +454,7 @@
                   <div className="w-full max-w-3xl rounded-2xl overflow-hidden shadow-md border border-slate-200 bg-white">
                     <img
                       src="image1.jpg"
-                      alt="질식사고예방 사전준비 확인사항"
+                      alt="질식사고예방 사전준비 사항"
                       className="w-full h-auto max-h-[60vh] object-contain block mx-auto"
                     />
                   </div>
@@ -494,7 +494,7 @@
                 <div className="mb-6 md:mb-10">
                   <h2 className="text-2xl md:text-3xl font-extrabold text-slate-900 mb-2 tracking-tight transition-all">맨홀 안전작업 체크리스트</h2>
                   <p className="text-slate-500 text-sm md:text-base font-medium leading-relaxed">
-                    안전한 맨홀 작업을 위해 아래 항목들을 꼼꼼히 확인해 주세요.
+                    안전한 맨홀 작업을 위해 10가지 항목의 자율점검을 실시하세요.
                   </p>
                 </div>
                 {/* 데스크탑 2단 그리드 적용 */}
@@ -532,8 +532,8 @@
             {step === 5 && (
               <div className="p-6 flex-1 flex flex-col bg-[#F8FAFC] animate-in slide-in-from-right-4 duration-500 ease-out overflow-y-auto custom-scrollbar md:px-10">
                 <div className="mb-6 md:mb-10 text-center">
-                  <h2 className="text-2xl md:text-3xl font-extrabold text-slate-900 mb-2 tracking-tight transition-all">평가 리포트</h2>
-                  <p className="text-slate-500 text-sm md:text-base font-medium leading-relaxed">안전한 작업을 위해 아래 조치사항을 반드시 준수해 주세요.</p>
+                  <h2 className="text-2xl md:text-3xl font-extrabold text-slate-900 mb-2 tracking-tight transition-all">자율점검 평가 리포트</h2>
+                  <p className="text-slate-500 text-sm md:text-base font-medium leading-relaxed">점검결과에 따른 조치사항을 반드시 준수하세요.</p>
                 </div>
                 
                 {/* 데스크탑 2단 그리드 적용 */}
@@ -728,7 +728,7 @@
               </div>
             )}
 
-            {/* Step 8: 작업 전 가스측정결과 및 보유 배풍기 풍량 확인 */}
+            {/* Step 8: 측정결과 및 배풍기 확인 */}
             {step === 8 && (
               <div className="p-6 flex-1 flex flex-col animate-in slide-in-from-right-4 duration-500 ease-out overflow-y-auto custom-scrollbar md:px-10">
                 <div className="mb-6 md:mb-10 md:text-center">
@@ -945,7 +945,7 @@
                 </div>
                 
                 <div className="px-6 pt-2 pb-6 space-y-3 shrink-0 md:flex md:space-y-0 md:gap-4 md:justify-center md:max-w-2xl md:mx-auto w-full">
-                  <button onClick={saveAsImage} className="w-full md:w-1/2 bg-slate-800 hover:bg-slate-700 text-white font-bold py-4 rounded-2xl shadow-lg active:scale-[0.98] transition-all duration-300 text-sm md:text-base flex items-center justify-center gap-2"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>종합결과 이미지로 저장하기</button>
+                  <button onClick={saveAsImage} className="w-full md:w-1/2 bg-slate-800 hover:bg-slate-700 text-white font-bold py-4 rounded-2xl shadow-lg active:scale-[0.98] transition-all duration-300 text-sm md:text-base flex items-center justify-center gap-2"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>종합결과 저장 후 공유해주세요</button>
                   <button onClick={reset} className="w-full md:w-1/2 bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-800 font-bold py-4 rounded-2xl active:scale-[0.98] transition-all duration-300 text-sm md:text-base">새로운 계산하기</button>
                 </div>
               </div>
