@@ -9,18 +9,14 @@
   <meta property="og:type" content="website" />
   <meta property="og:title" content="맨홀작업 - 안전지킴이앱" />
   <meta property="og:description" content="맨홀 작업 전 사전일정 송부 및 안전점검을 지원합니다." />
-  <!-- 주의: 카카오톡 등에서는 절대경로(https://~)를 사용해야 이미지가 확실하게 뜹니다. -->
-  <!-- 아래 'manhole.jpg' 부분을 실제 첨부하신 이미지의 파일명으로 꼭 변경해 주세요! -->
-  <meta property="og:image" content="https://ventilation-assessment.vercel.app/manhole.jpg" />
+  <meta property="og:image" content="https://ventilation-assessment.vercel.app/image_bf5001.jpg" />
   <meta property="og:url" content="https://ventilation-assessment.vercel.app" />
   
-  <!-- 트위터(X) 등 기타 플랫폼 공유 썸네일 설정 -->
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="맨홀작업 - 안전지킴이앱" />
   <meta name="twitter:description" content="맨홀 작업 전 사전일정 송부 및 안전점검을 지원합니다." />
-  <meta name="twitter:image" content="https://ventilation-assessment.vercel.app/manhole.jpg" />
+  <meta name="twitter:image" content="https://ventilation-assessment.vercel.app/image_bf5001.jpg" />
 
-  <!-- 카카오톡 인앱 브라우저 감지 및 외부 브라우저(크롬/사파리) 강제 호출 스크립트 -->
   <script>
     var userAgent = navigator.userAgent.toLowerCase();
     if (userAgent.indexOf("kakaotalk") > -1) {
@@ -28,9 +24,8 @@
     }
   </script>
 
-  <!-- PWA 아이콘 변수 설정 -->
   <script>
-    var iconFileName = "manhole.jpg"; 
+    var iconFileName = "image_bf5001.jpg"; 
     var manifestData = {
       "name": "맨홀지킴이",
       "short_name": "맨홀지킴이",
@@ -39,16 +34,8 @@
       "background_color": "#F4F7FB",
       "theme_color": "#2563EB",
       "icons": [
-        {
-          "src": iconFileName,
-          "sizes": "192x192",
-          "type": "image/svg+xml"
-        },
-        {
-          "src": iconFileName,
-          "sizes": "512x512",
-          "type": "image/svg+xml"
-        }
+        { "src": iconFileName, "sizes": "192x192", "type": "image/jpeg" },
+        { "src": iconFileName, "sizes": "512x512", "type": "image/jpeg" }
       ]
     };
     var manifestStr = JSON.stringify(manifestData);
@@ -73,29 +60,6 @@
   <!-- html2canvas & jsPDF -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-
-  <!-- 강력한 보안 및 안티 디버깅 스크립트 -->
-  <script>
-    document.addEventListener('contextmenu', function(e) { e.preventDefault(); });
-    document.addEventListener('keydown', function(e) {
-      if (e.keyCode === 123 || (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74)) || (e.ctrlKey && (e.keyCode === 85 || e.keyCode === 83))) {
-        e.preventDefault(); e.returnValue = false;
-      }
-    });
-    setInterval(function() {
-      var before = new Date().getTime();
-      (function() { return false; }['constructor']('debugger')());
-      var after = new Date().getTime();
-      if (after - before > 100) {
-        document.body.innerHTML = '<div style="display:flex; justify-content:center; align-items:center; height:100vh; background:#f8fafc; color:#0f172a; font-size:1.2rem; font-weight:bold;">보안 정책에 의해 개발자 도구를 사용할 수 없습니다.</div>';
-      }
-    }, 50);
-    setInterval(function() {
-      console.clear();
-      console.log("%c경고!", "color: red; font-size: 50px; font-weight: bold;");
-      console.log("%c이곳은 개발자 전용 공간입니다.", "color: #333; font-size: 16px;");
-    }, 1000);
-  </script>
 
   <style>
     body { font-family: 'Inter', 'Noto Sans KR', sans-serif; -webkit-tap-highlight-color: transparent; }
@@ -147,12 +111,16 @@
       const [q9, setQ9] = useState(null);
       const [q10, setQ10] = useState(null);
 
-      // 가스 측정 결과 상태 변수 추가
       const [calDate, setCalDate] = useState('');
       const [o2, setO2] = useState('');
       const [h2s, setH2S] = useState('');
       const [co2, setCO2] = useState('');
       const [co, setCO] = useState('');
+
+      // Step 10 상태 변수
+      const [workers, setWorkers] = useState([{ type: '작업자', name: '' }]);
+      const [approver, setApprover] = useState({ dept: '', title: '', name: '', phone: '', signed: false });
+      const permitPdfTemplateRef = useRef(null);
 
       const [showInstallBanner, setShowInstallBanner] = useState(false);
       const [showInstallInstructions, setShowInstallInstructions] = useState(false);
@@ -195,6 +163,31 @@
       const ventTime = Math.max(Math.ceil(rawVentTime), 30); 
       const isMinimumForced = Math.ceil(rawVentTime) < 30 && effectiveAirflowMin > 0;
 
+      const handleAddWorker = () => {
+        setWorkers([...workers, { type: '작업자', name: '' }]);
+      };
+      const handleWorkerChange = (index, field, value) => {
+        const newWorkers = [...workers];
+        newWorkers[index][field] = value;
+        setWorkers(newWorkers);
+      };
+      const handleRemoveWorker = (index) => {
+        setWorkers(workers.filter((_, i) => i !== index));
+      };
+      const handleSendPermitSMS = () => {
+        if (!approver.phone) {
+          alert('최종 허가자의 전화번호를 입력해주세요.');
+          return;
+        }
+        const message = `[맨홀작업 안전지킴이]\n\n작업허가서 승인 요청입니다.\n- 장소: ${formData.location}\n- 내용: ${formData.workContent}\n\n아래 링크를 눌러 최종 서명을 진행해주세요.\nhttps://ventilation-assessment.vercel.app/permit-sign`;
+        window.location.href = `sms:${approver.phone}?body=${encodeURIComponent(message)}`;
+        
+        // 원격 서명 시뮬레이션
+        setTimeout(() => {
+          setApprover(prev => ({ ...prev, signed: true }));
+        }, 5000);
+      };
+
       const saveAsPDF = () => {
         if (!pdfTemplateRef.current) return;
         if (!window.html2canvas || !window.jspdf) {
@@ -209,11 +202,8 @@
           const imgData = canvas.toDataURL('image/jpeg', 1.0);
           const pdf = new jsPDF('p', 'mm', 'a4');
           const pdfWidth = pdf.internal.pageSize.getWidth();
-          const imgWidth = canvas.width;
-          const imgHeight = canvas.height;
-          const ratio = pdfWidth / imgWidth;
-          const finalHeight = imgHeight * ratio;
-          pdf.addImage(imgData, 'JPEG', 0, 15, pdfWidth, finalHeight);
+          const imgHeight = (canvas.height * pdfWidth) / canvas.width;
+          pdf.addImage(imgData, 'JPEG', 0, 15, pdfWidth, imgHeight);
           const date = new Date();
           const dateStr = `${date.getFullYear().toString().slice(-2)}${(date.getMonth()+1).toString().padStart(2,'0')}${date.getDate().toString().padStart(2,'0')}`;
           pdf.save(`맨홀작업일정_사전송부_${dateStr}.pdf`);
@@ -223,31 +213,62 @@
         });
       };
 
-      // 동영상 촬영가이드 다운로드 기능 (이미지 직접 다운로드로 변경 - 오류 방지)
+      const savePermitAsPDF = () => {
+        if (!permitPdfTemplateRef.current) return;
+        if (!window.html2canvas || !window.jspdf) {
+          alert('PDF 기능을 불러오는 중입니다. 잠시 후 시도해주세요.'); return;
+        }
+        const { jsPDF } = window.jspdf;
+        permitPdfTemplateRef.current.style.display = 'block';
+
+        window.html2canvas(permitPdfTemplateRef.current, { scale: 2, backgroundColor: '#FFFFFF', useCORS: true })
+        .then(canvas => {
+          permitPdfTemplateRef.current.style.display = 'none';
+          const imgData = canvas.toDataURL('image/jpeg', 1.0);
+          const pdf = new jsPDF('p', 'mm', 'a4');
+          const pdfWidth = pdf.internal.pageSize.getWidth();
+          const pdfHeight = pdf.internal.pageSize.getHeight();
+          
+          // 이미지가 A4 높이를 초과하더라도 무조건 A4 1장에 맞게 비율 축소
+          let imgHeight = (canvas.height * pdfWidth) / canvas.width;
+          if (imgHeight > pdfHeight) {
+             imgHeight = pdfHeight;
+          }
+
+          // 상단 머리말 여백 0으로 설정
+          pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, imgHeight);
+          const date = new Date();
+          const dateStr = `${date.getFullYear().toString().slice(-2)}${(date.getMonth()+1).toString().padStart(2,'0')}${date.getDate().toString().padStart(2,'0')}`;
+          pdf.save(`맨홀공간_작업계획허가서_${dateStr}.pdf`);
+        }).catch(err => {
+          permitPdfTemplateRef.current.style.display = 'none';
+          alert('PDF 저장 중 오류가 발생했습니다.');
+        });
+      };
+
       const downloadGuideImage = () => {
         try {
           const link = document.createElement('a');
-          link.href = '동영상촬영가이드.jpg'; // 서버에 업로드된 원본 이미지 파일명
-          link.download = '맨홀작업_안전조치_동영상_촬영가이드.jpg'; // 다운로드될 때의 파일명
+          link.href = '동영상촬영가이드.jpg';
+          link.download = '맨홀작업_안전조치_동영상_촬영가이드.jpg';
           document.body.appendChild(link);
           link.click();
           document.body.removeChild(link);
         } catch (error) {
-          alert('다운로드 중 오류가 발생했습니다. 브라우저 설정이나 파일 경로를 확인해주세요.');
+          alert('다운로드 중 오류가 발생했습니다.');
         }
       };
 
-      // 원콜서비스 안내 다운로드 기능 (저용량 이미지로 변경)
       const downloadOneCallService = () => {
         try {
           const link = document.createElement('a');
-          link.href = 'onecall.jpg'; // 서버에 업로드할 이미지 파일명
-          link.download = '원콜서비스_안내.jpg'; // 다운로드될 이미지 파일명
+          link.href = '원콜서비스.pdf';
+          link.download = '원콜서비스_안내.pdf';
           document.body.appendChild(link);
           link.click();
           document.body.removeChild(link);
         } catch (error) {
-          alert('다운로드 중 오류가 발생했습니다. 브라우저 설정이나 파일 경로를 확인해주세요.');
+          alert('다운로드 중 오류가 발생했습니다.');
         }
       };
 
@@ -300,13 +321,15 @@
         setComboRectWidth(''); setComboRectLength(''); setComboRectHeight(''); setComboCylDiameter(''); setComboCylHeight('');
         setQ1(null); setQ2(null); setQ3(null); setQ4(null); setQ5(null); setQ6(null); setQ7(null); setQ8(null); setQ9(null); setQ10(null);
         setCalDate(''); setO2(''); setH2S(''); setCO2(''); setCO('');
+        setWorkers([{ type: '작업자', name: '' }]);
+        setApprover({ dept: '', title: '', name: '', phone: '', signed: false });
       };
 
       return (
         <div className="min-h-screen bg-[#F4F7FB] flex justify-center font-sans text-slate-800 selection:bg-blue-200 sm:p-4 md:p-8">
           <div className="w-full max-w-md md:max-w-3xl lg:max-w-5xl bg-white sm:rounded-[2.5rem] sm:shadow-[0_20px_60px_-15px_rgba(0,0,0,0.08)] min-h-[100dvh] sm:min-h-[850px] flex flex-col relative overflow-hidden sm:border border-slate-100/50 transition-all duration-500">
             
-            {/* 진행률 헤더 (1페이지 제외) */}
+            {/* 상단 프로그레스 바 (1~9단계에서만 표시) */}
             {step > 1 && step <= 9 && (
               <header className="px-6 py-5 flex items-center bg-white/80 backdrop-blur-md sticky top-0 z-20 border-b border-slate-100/80 justify-between">
                 <button onClick={prevStep} className="p-2 -ml-2 rounded-full hover:bg-slate-50 text-slate-600 transition-colors active:scale-95 shrink-0">
@@ -314,30 +337,23 @@
                 </button>
                 <div className="flex-1 flex items-center px-4 md:px-10">
                   <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
-                    <div className="bg-blue-600 h-full rounded-full transition-all duration-500 ease-out" style={{ width: `${((step - 1) / 8) * 100}%` }}></div>
+                    <div className="bg-blue-600 h-full rounded-full transition-all duration-500 ease-out" style={{ width: `${((step - 1) / 9) * 100}%` }}></div>
                   </div>
-                  <span className="ml-3 text-xs font-bold text-slate-400 whitespace-nowrap">{step - 1} / 8</span>
+                  <span className="ml-3 text-xs font-bold text-slate-400 whitespace-nowrap">{step - 1} / 9</span>
                 </div>
-                <button onClick={nextStep} disabled={step === 9} className={`p-2 -mr-2 rounded-full hover:bg-slate-50 text-slate-600 transition-colors active:scale-95 shrink-0 ${step === 9 ? 'opacity-0 cursor-default' : 'opacity-100'}`}>
+                <button onClick={nextStep} disabled={step === 10} className={`p-2 -mr-2 rounded-full hover:bg-slate-50 text-slate-600 transition-colors active:scale-95 shrink-0 ${step === 10 ? 'opacity-0 cursor-default' : 'opacity-100'}`}>
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" /></svg>
                 </button>
               </header>
             )}
 
-            {/* Step 1: 메인 화면 */}
+            {/* Step 1 */}
             {step === 1 && (
               <div className="flex flex-col flex-1 pb-6 pt-10 animate-in fade-in duration-700 ease-out h-full max-h-[100dvh] relative md:justify-center">
                 <div className="text-center w-full space-y-3 px-6 mb-6 shrink-0 mt-4 md:mt-0">
-                  <span className="inline-block py-1.5 px-4 rounded-full bg-blue-50 text-blue-600 text-xs font-bold tracking-wide mb-1">
-                    안전보건공단 KOSHA GUIDE 기준
-                  </span>
-                  <h1 className="text-[2.2rem] md:text-5xl font-extrabold text-slate-900 tracking-tight leading-tight transition-all">
-                    맨홀작업 안전조치 <br className="md:hidden"/>
-                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-500">맨홀지킴이</span>
-                  </h1>
-                  <p className="text-slate-500 text-sm md:text-base mt-3 font-medium px-4 md:max-w-lg md:mx-auto transition-all">
-                    맨홀 작업 사전일정 송부 및 작업 전 필수적인 맨홀 안전점검을 통한 맨홀지킴이 전문가 어플입니다.
-                  </p>
+                  <span className="inline-block py-1.5 px-4 rounded-full bg-blue-50 text-blue-600 text-xs font-bold tracking-wide mb-1">안전보건공단 KOSHA GUIDE 기준</span>
+                  <h1 className="text-[2.2rem] md:text-5xl font-extrabold text-slate-900 tracking-tight leading-tight transition-all">맨홀작업 안전조치 <br className="md:hidden"/><span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-500">맨홀지킴이</span></h1>
+                  <p className="text-slate-500 text-sm md:text-base mt-3 font-medium px-4 md:max-w-lg md:mx-auto transition-all">맨홀 작업 사전일정 송부 및 작업 전 필수적인 맨홀 안전점검을 지원합니다.</p>
                 </div>
                 <div className="w-full relative shrink-0 md:max-w-2xl md:mx-auto md:rounded-3xl md:overflow-hidden md:shadow-sm md:border md:border-slate-100 transition-all">
                   <div className="w-full aspect-[4/3] md:aspect-[21/9] relative overflow-hidden bg-white shadow-sm border-y border-slate-100 md:border-none">
@@ -345,24 +361,21 @@
                   </div>
                 </div>
                 <div className="px-6 flex-1 flex flex-col justify-center my-auto w-full max-w-sm md:max-w-md mx-auto min-h-[100px] relative z-20">
-                  <button onClick={nextStep} className="w-full bg-slate-900 hover:bg-blue-600 text-white font-bold py-[1.15rem] md:py-5 rounded-2xl md:rounded-3xl shadow-xl hover:shadow-blue-500/25 active:scale-[0.98] transition-all duration-300 text-lg md:text-xl">
-                    사전송부 및 평가 시작
-                  </button>
+                  <button onClick={nextStep} className="w-full bg-slate-900 hover:bg-blue-600 text-white font-bold py-[1.15rem] md:py-5 rounded-2xl md:rounded-3xl shadow-xl hover:shadow-blue-500/25 active:scale-[0.98] transition-all duration-300 text-lg md:text-xl relative z-30">사전송부 및 평가 시작</button>
                 </div>
-                <div className="w-full shrink-0 flex flex-col items-center justify-end opacity-90 px-6 pb-4 md:absolute md:bottom-6 md:left-0 md:right-0 pointer-events-none">
+                <div className="w-full shrink-0 flex flex-col items-center justify-end opacity-90 px-6 pb-4 md:absolute md:bottom-6 md:left-0 md:right-0 pointer-events-none z-10">
                   <img src="image_bfaefe.png" alt="하단 로고" className="h-10 sm:h-12 object-contain" />
                 </div>
               </div>
             )}
 
-            {/* Step 2: 맨홀 작업 일정 사전송부 폼 */}
+            {/* Step 2 */}
             {step === 2 && (
               <div className="flex-1 flex flex-col animate-in slide-in-from-right-4 duration-500 ease-out bg-[#F8FAFC]">
                 <div ref={formRef} className="p-6 pb-4 bg-white flex-1 overflow-y-auto custom-scrollbar">
                   <div className="mb-6 text-center border-b-2 border-slate-800 pb-4">
                     <h2 className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight transition-all">맨홀 작업 일정 사전송부 서식</h2>
                   </div>
-                  {/* PC 버전에서는 2단 그리드로 변경 */}
                   <div className="space-y-1 md:grid md:grid-cols-2 md:gap-x-10 md:gap-y-2 md:space-y-0 transition-all">
                     {[
                       { num: '1', label: '수신자', name: 'receiver', placeholder: '입력하세요' },
@@ -374,7 +387,7 @@
                       { num: '7', label: '현장 연락처', name: 'contact', placeholder: '핸드폰 등 입력' },
                       { num: '8', label: '작업 일시', name: 'workDate', placeholder: '예: 2024.10.12 09:00~18:00' },
                       { num: '9', label: '작업 내용', name: 'workContent', placeholder: '구체적인 작업 내용 입력' },
-                      { num: '10', label: '기타(호흡용보호구 등)', name: 'otherInfo', placeholder: '보유장비, 특기사항 등' },
+                      { num: '10', label: '기타(보호구 등)', name: 'otherInfo', placeholder: '보유장비, 특기사항 등' },
                       { num: '11', label: '특이사항', name: 'remarks', placeholder: '특이사항 입력' },
                       { num: '12', label: '입회자(담당공무원)', name: 'inspector', placeholder: '입력하세요' }
                     ].map((item, idx) => (
@@ -390,7 +403,6 @@
                   </div>
                 </div>
 
-                {/* PDF 렌더링용 히든 템플릿 (표 양식) */}
                 <div style={{ display: 'none', position: 'absolute', left: '-9999px', top: '0', width: '800px', backgroundColor: 'white', padding: '10px 40px 40px 40px', boxSizing: 'border-box' }} ref={pdfTemplateRef}>
                   <div style={{ textAlign: 'center', marginBottom: '15px', marginTop: '35px', fontSize: '13.5px', fontWeight: 'bold', color: '#DC2626', lineHeight: '1.4' }}>
                     『맨홀 질식재해 예방 3대 안전수칙』 준수<br/>
@@ -404,7 +416,7 @@
                   <table style={{ width: '100%', borderCollapse: 'collapse', border: '2px solid black', color: '#000', fontSize: '16px', tableLayout: 'fixed' }}>
                     <tbody>
                       <tr>
-                        <th style={{ border: '1px solid black', backgroundColor: '#f3f4f6', padding: '12px', width: '20%', textAlign: 'center', verticalAlign: 'middle', fontWeight: 'bold' }}>사업장명<br/>(건설 현장명)</th>
+                        <th style={{ border: '1px solid black', backgroundColor: '#f3f4f6', padding: '12px', width: '20%', textAlign: 'center', verticalAlign: 'middle', fontWeight: 'bold' }}>사업장명<br/>(현장명)</th>
                         <td style={{ border: '1px solid black', padding: '12px', width: '30%', wordBreak: 'break-word', whiteSpace: 'pre-wrap' }}>{formData.companyName}</td>
                         <th style={{ border: '1px solid black', backgroundColor: '#f3f4f6', padding: '12px', width: '20%', textAlign: 'center', verticalAlign: 'middle', fontWeight: 'bold' }}>대표자<br/>(현장 책임자)</th>
                         <td style={{ border: '1px solid black', padding: '12px', width: '30%', wordBreak: 'break-word', whiteSpace: 'pre-wrap' }}>{formData.representative}</td>
@@ -447,7 +459,7 @@
                 <div className="mt-auto px-6 pt-4 pb-6 bg-[#F8FAFC] space-y-3 shrink-0 border-t border-slate-100 md:flex md:space-y-0 md:gap-4 md:justify-center md:px-10">
                   <button onClick={saveAsPDF} className="w-full md:w-1/2 bg-slate-800 hover:bg-slate-700 text-white font-bold py-4 rounded-2xl shadow-lg active:scale-[0.98] transition-all duration-300 text-sm md:text-base flex items-center justify-center gap-2">
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
-                    맨홀 작업 일정 다운로드 후 공유하세요
+                    맨홀 작업 일정 다운로드
                   </button>
                   <button onClick={nextStep} className="w-full md:w-1/2 bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-2xl shadow-lg hover:shadow-blue-500/25 active:scale-[0.98] transition-all duration-300 text-lg md:text-xl">
                     가이드 확인 진행
@@ -456,76 +468,52 @@
               </div>
             )}
 
-            {/* Step 3: 질식사고예방 사전준비 사항 (이미지 + 다운로드 기능) */}
+            {/* Step 3 */}
             {step === 3 && (
               <div className="flex-1 flex flex-col bg-[#F8FAFC] animate-in slide-in-from-right-4 duration-500 ease-out h-full overflow-hidden">
                 <div className="p-6 pb-4 shrink-0 bg-white border-b border-slate-100 shadow-sm z-10 relative text-center">
                   <h2 className="text-2xl md:text-3xl font-extrabold text-slate-900 mb-2 tracking-tight transition-all">질식사고예방 사전준비 사항</h2>
-                  <p className="text-slate-500 text-sm md:text-base font-medium leading-relaxed">
-                    작업 전 필수 안전조치 및 동영상 촬영 가이드 확인한 후 휴대폰으로 촬영하세요.
-                  </p>
+                  <p className="text-slate-500 text-sm md:text-base font-medium leading-relaxed">작업 전 필수 안전조치 및 동영상 촬영 가이드 확인한 후 휴대폰으로 촬영하세요.</p>
                 </div>
 
                 <div className="flex-1 overflow-y-auto custom-scrollbar p-6 bg-slate-50 flex flex-col justify-start items-center">
                   <div className="w-full max-w-3xl rounded-2xl overflow-hidden shadow-md border border-slate-200 bg-white">
-                    <img
-                      src="image1.jpg"
-                      alt="질식사고예방 사전준비 사항"
-                      className="w-full h-auto max-h-[60vh] object-contain block mx-auto"
-                    />
+                    <img src="image1.jpg" alt="질식사고예방 사전준비 사항" className="w-full h-auto max-h-[60vh] object-contain block mx-auto" />
                   </div>
                 </div>
 
                 <div className="p-6 pt-4 pb-6 bg-white border-t border-slate-100 shrink-0 shadow-[0_-10px_20px_-10px_rgba(0,0,0,0.05)] z-10 relative space-y-3 md:flex md:space-y-0 md:gap-4 md:justify-center md:px-10">
-                  <button
-                    onClick={downloadGuideImage}
-                    className="w-full md:w-1/3 bg-slate-800 hover:bg-slate-700 text-white font-bold py-4 rounded-2xl shadow-lg active:scale-[0.98] transition-all duration-300 text-sm flex items-center justify-center gap-2"
-                  >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
-                    가이드 다운로드
+                  <button onClick={downloadGuideImage} className="w-full md:w-1/3 bg-slate-800 hover:bg-slate-700 text-white font-bold py-4 rounded-2xl shadow-lg active:scale-[0.98] transition-all duration-300 text-sm flex items-center justify-center gap-2">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>가이드 다운로드
                   </button>
-                  
                   <input type="file" accept="video/*" capture="environment" id="videoCapture" className="hidden" />
-                  <label
-                    htmlFor="videoCapture"
-                    className="w-full md:w-1/3 bg-rose-600 hover:bg-rose-700 text-white font-bold py-4 rounded-2xl shadow-lg active:scale-[0.98] transition-all duration-300 text-sm flex items-center justify-center gap-2 cursor-pointer m-0"
-                  >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
-                    동영상 촬영하기
+                  <label htmlFor="videoCapture" className="w-full md:w-1/3 bg-rose-600 hover:bg-rose-700 text-white font-bold py-4 rounded-2xl shadow-lg active:scale-[0.98] transition-all duration-300 text-sm flex items-center justify-center gap-2 cursor-pointer m-0">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>동영상 촬영하기
                   </label>
-
-                  <button
-                    onClick={nextStep}
-                    className="w-full md:w-1/3 bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-2xl shadow-lg hover:shadow-blue-500/30 active:scale-[0.98] transition-all duration-300 text-lg"
-                  >
-                    확인완료/다음
-                  </button>
+                  <button onClick={nextStep} className="w-full md:w-1/3 bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-2xl shadow-lg hover:shadow-blue-500/30 active:scale-[0.98] transition-all duration-300 text-lg">확인완료/다음</button>
                 </div>
               </div>
             )}
 
-            {/* Step 4: 체크리스트 질문 */}
+            {/* Step 4 */}
             {step === 4 && (
               <div className="p-6 flex-1 flex flex-col animate-in slide-in-from-right-4 duration-500 ease-out text-center overflow-y-auto custom-scrollbar md:px-10">
                 <div className="mb-6 md:mb-10">
                   <h2 className="text-2xl md:text-3xl font-extrabold text-slate-900 mb-2 tracking-tight transition-all">맨홀 안전작업 체크리스트</h2>
-                  <p className="text-slate-500 text-sm md:text-base font-medium leading-relaxed">
-                    안전한 맨홀 작업을 위해 10가지 항목의 자율점검을 실시하세요.
-                  </p>
+                  <p className="text-slate-500 text-sm md:text-base font-medium leading-relaxed">안전한 맨홀 작업을 위해 10가지 항목의 자율점검을 실시하세요.</p>
                 </div>
-                {/* 데스크탑 2단 그리드 적용 */}
                 <div className="space-y-4 pb-4 text-left md:grid md:grid-cols-2 md:gap-5 md:space-y-0 transition-all">
                   {[
-                    { qState: q1, setFn: setQ1, num: '1', text: '해당 밀폐공간 위치파악, 유해위험요인(황화수소, CO2, 산소결핍 등) 파악 하셨나요?' },
+                    { qState: q1, setFn: setQ1, num: '1', text: '해당 밀폐공간 위치파악, 유해위험요인 파악 하셨나요?' },
                     { qState: q2, setFn: setQ2, num: '2', text: '안전조치 사전확인을 위한 작업허가서 발급 및 작업장 게시 하셨나요?' },
                     { qState: q3, setFn: setQ3, num: '3', text: '맨홀 밀폐공간 인근 잘보이는 곳에 출입금지 표지 게시 하셨나요?' },
                     { qState: q4, setFn: setQ4, num: '4', text: <>산소 및 유해가스 측정을 작업 전, <span className="text-red-600 font-black">작업 중에도</span> 하셨나요?</> },
-                    { qState: q5, setFn: setQ5, num: '5', text: <>맨홀 작업 전, 작업 중 지속적으로 환기팬 가동 및 <span className="text-red-600 font-black">보유 환기팬의 풍량(정압)을</span> 아시나요?</> },
+                    { qState: q5, setFn: setQ5, num: '5', text: <>맨홀 작업 전, 작업 중 지속적으로 환기팬 가동 및 <span className="text-red-600 font-black">보유 환기팬 풍량(정압)을</span> 아시나요?</> },
                     { qState: q6, setFn: setQ6, num: '6', text: '송기마스크 등 호흡용보호구 비치 하셨나요?' },
                     { qState: q7, setFn: setQ7, num: '7', text: '감시인을 배치하여 내외부간 연락 및 비상시 조치할 수 있도록 하셨나요?' },
                     { qState: q8, setFn: setQ8, num: '8', text: '작업 전, 후 입장 및 퇴장 시 근로자 인원 점검을 하셨나요?' },
                     { qState: q9, setFn: setQ9, num: '9', text: '작업 전 작업자 및 감시인에게 안전한 작업방법(TBM) 교육을 실시하셨나요?' },
-                    { qState: q10, setFn: setQ10, num: '10', text: '구조장비(삼각대, 무전기, 로프 등) 설치 및 긴급구조훈련을 실시하셨나요?' }
+                    { qState: q10, setFn: setQ10, num: '10', text: '구조장비 설치 및 긴급구조훈련을 실시하셨나요?' }
                   ].map((item, idx) => (
                     <div key={idx} className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm hover:border-blue-100 transition-colors flex flex-col justify-between">
                       <p className="font-bold text-slate-800 mb-4 text-sm md:text-base leading-snug"><span className="text-blue-600 mr-1">{item.num}.</span> {item.text}</p>
@@ -537,14 +525,12 @@
                   ))}
                 </div>
                 <div className="mt-auto pt-4 pb-2 bg-transparent shrink-0 md:max-w-md md:mx-auto w-full">
-                  <button onClick={nextStep} disabled={!q1 || !q2 || !q3 || !q4 || !q5 || !q6 || !q7 || !q8 || !q9 || !q10} className="w-full bg-blue-600 disabled:bg-slate-200 disabled:text-slate-400 text-white font-bold py-4 rounded-2xl shadow-lg hover:shadow-blue-500/30 disabled:shadow-none active:scale-[0.98] transition-all duration-300 text-lg">
-                    평가 리포트 확인
-                  </button>
+                  <button onClick={nextStep} disabled={!q1 || !q2 || !q3 || !q4 || !q5 || !q6 || !q7 || !q8 || !q9 || !q10} className="w-full bg-blue-600 disabled:bg-slate-200 disabled:text-slate-400 text-white font-bold py-4 rounded-2xl shadow-lg hover:shadow-blue-500/30 disabled:shadow-none active:scale-[0.98] transition-all duration-300 text-lg">평가 리포트 확인</button>
                 </div>
               </div>
             )}
 
-            {/* Step 5: 평가 리포트 */}
+            {/* Step 5 */}
             {step === 5 && (
               <div className="p-6 flex-1 flex flex-col bg-[#F8FAFC] animate-in slide-in-from-right-4 duration-500 ease-out overflow-y-auto custom-scrollbar md:px-10">
                 <div className="mb-6 md:mb-10 text-center">
@@ -552,7 +538,6 @@
                   <p className="text-slate-500 text-sm md:text-base font-medium leading-relaxed">점검결과에 따른 조치사항을 반드시 준수하세요.</p>
                 </div>
                 
-                {/* 데스크탑 2단 그리드 적용 */}
                 <div className="space-y-3 mb-6 md:grid md:grid-cols-2 md:gap-5 md:space-y-0 transition-all">
                   {[
                     { q: q1, title: '유해위험요인 파악', pass: '해당 공간의 위치와 위험요인을 정확히 파악했습니다.', fail: '작업 전 해당 장소의 위치와 위험요인을 명확히 파악하세요.' },
@@ -577,7 +562,6 @@
                     </div>
                   ))}
                   
-                  {/* 감소대책 조치사항 (그리드 두 칸 차지) */}
                   <div className="md:col-span-2 bg-gradient-to-br from-rose-50 to-orange-50 border border-rose-100 p-5 rounded-2xl shadow-sm">
                     <div className="flex items-center gap-2 mb-3">
                       <div className="bg-rose-100 p-1.5 rounded-lg text-rose-600"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg></div>
@@ -587,7 +571,6 @@
                   </div>
                 </div>
                 
-                {/* 동영상 가이드 QR 코드 영역 */}
                 <div className="mb-6 flex gap-3 md:gap-5 justify-center items-stretch md:max-w-3xl md:mx-auto w-full transition-all">
                   <a href="https://youtu.be/VxLudzI5DjU" target="_blank" rel="noopener noreferrer" className="flex-1 transition-transform hover:scale-105 active:scale-95">
                     <div className="bg-white p-2 rounded-xl border border-slate-200 shadow-sm text-center h-full flex flex-col justify-between">
@@ -624,14 +607,13 @@
               </div>
             )}
 
-            {/* Step 6: 맨홀 공간 형태 선택 */}
+            {/* Step 6 */}
             {step === 6 && (
               <div className="p-6 flex-1 flex flex-col animate-in slide-in-from-right-4 duration-500 ease-out md:justify-center md:items-center">
                 <div className="mb-8 md:mb-12 text-center">
                   <h2 className="text-2xl md:text-4xl font-extrabold text-slate-900 mb-3 tracking-tight transition-all">맨홀 공간 형태 선택</h2>
                   <p className="text-slate-500 text-sm md:text-lg font-medium leading-relaxed">작업하실 밀폐공간의 형태를 선택해주세요.</p>
                 </div>
-                {/* 데스크탑 3단 그리드 적용 */}
                 <div className="space-y-4 w-full md:grid md:grid-cols-3 md:gap-6 md:space-y-0 md:max-w-4xl transition-all">
                   <button onClick={() => { setShape('cyl'); nextStep(); }} className="w-full bg-white border border-slate-200 hover:border-blue-500 hover:bg-blue-50/50 p-6 md:p-8 rounded-[1.5rem] flex md:flex-col items-center justify-center shadow-sm hover:shadow-md transition-all duration-300 group">
                     <div className="w-14 h-14 md:w-20 md:h-20 bg-slate-50 group-hover:bg-white rounded-2xl flex items-center justify-center mr-5 md:mr-0 md:mb-4 shadow-inner transition-colors"><div className="w-6 h-6 md:w-10 md:h-10 border-[3px] border-slate-400 group-hover:border-blue-500 rounded-full transition-colors"></div></div>
@@ -639,7 +621,6 @@
                       <h3 className="text-lg md:text-xl font-bold text-slate-800 group-hover:text-blue-700 transition-colors">원통형(원형)</h3>
                       <p className="text-xs md:text-sm text-slate-400 mt-1 font-medium">지름, 높이 기반</p>
                     </div>
-                    <div className="ml-auto md:hidden opacity-0 group-hover:opacity-100 text-blue-500 transition-opacity"><svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg></div>
                   </button>
                   <button onClick={() => { setShape('rect'); nextStep(); }} className="w-full bg-white border border-slate-200 hover:border-blue-500 hover:bg-blue-50/50 p-6 md:p-8 rounded-[1.5rem] flex md:flex-col items-center justify-center shadow-sm hover:shadow-md transition-all duration-300 group">
                     <div className="w-14 h-14 md:w-20 md:h-20 bg-slate-50 group-hover:bg-white rounded-2xl flex items-center justify-center mr-5 md:mr-0 md:mb-4 shadow-inner transition-colors"><div className="w-7 h-5 md:w-12 md:h-8 border-[3px] border-slate-400 group-hover:border-blue-500 rounded-sm transition-colors"></div></div>
@@ -647,7 +628,6 @@
                       <h3 className="text-lg md:text-xl font-bold text-slate-800 group-hover:text-blue-700 transition-colors">직사각형</h3>
                       <p className="text-xs md:text-sm text-slate-400 mt-1 font-medium">가로, 세로, 높이 기반</p>
                     </div>
-                    <div className="ml-auto md:hidden opacity-0 group-hover:opacity-100 text-blue-500 transition-opacity"><svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg></div>
                   </button>
                   <button onClick={() => { setShape('combo'); nextStep(); }} className="w-full bg-white border border-slate-200 hover:border-blue-500 hover:bg-blue-50/50 p-6 md:p-8 rounded-[1.5rem] flex md:flex-col items-center justify-center shadow-sm hover:shadow-md transition-all duration-300 group">
                     <div className="w-14 h-14 md:w-20 md:h-20 bg-slate-50 group-hover:bg-white rounded-2xl flex items-center justify-center mr-5 md:mr-0 md:mb-4 shadow-inner transition-colors"><div className="w-7 h-7 md:w-12 md:h-12 border-[3px] border-slate-400 group-hover:border-blue-500 rounded-lg flex items-center justify-center transition-colors"><div className="w-3 h-3 md:w-5 md:h-5 border-[2px] border-slate-400 group-hover:border-blue-500 rounded-full bg-slate-100"></div></div></div>
@@ -655,13 +635,12 @@
                       <h3 className="text-lg md:text-xl font-bold text-slate-800 group-hover:text-blue-700 transition-colors">결합형</h3>
                       <p className="text-xs md:text-sm text-slate-400 mt-1 font-medium">직사각형 + 원통형</p>
                     </div>
-                    <div className="ml-auto md:hidden opacity-0 group-hover:opacity-100 text-blue-500 transition-opacity"><svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg></div>
                   </button>
                 </div>
               </div>
             )}
 
-            {/* Step 7: 맨홀 제원 입력 */}
+            {/* Step 7 */}
             {step === 7 && (
               <div className="p-6 flex-1 flex flex-col animate-in slide-in-from-right-4 duration-500 ease-out overflow-y-auto custom-scrollbar md:px-10">
                 <div className="mb-6 shrink-0 md:text-center md:mb-10">
@@ -731,32 +710,28 @@
                       </div>
                     </div>
                   )}
-                  
                   <div className="mt-8 bg-slate-50 rounded-2xl md:rounded-3xl p-5 md:p-6 border border-slate-100 flex justify-between items-center shadow-inner shrink-0">
                     <span className="text-slate-500 font-bold text-sm md:text-base">총 체적(m³)</span>
                     <span className="text-3xl md:text-4xl font-black text-blue-600">{volume > 0 ? volume.toFixed(2) : '0.00'}</span>
                   </div>
                 </div>
-                
                 <div className="mt-4 pt-2 pb-4 shrink-0 md:max-w-md md:mx-auto w-full">
                    <button onClick={nextStep} disabled={volume <= 0} className="w-full bg-blue-600 disabled:bg-slate-100 disabled:text-slate-400 text-white font-bold py-4 rounded-2xl shadow-lg hover:shadow-blue-500/30 disabled:shadow-none active:scale-[0.98] transition-all duration-300 text-lg">맨홀 농도측정/풍량 입력</button>
                 </div>
               </div>
             )}
 
-            {/* Step 8: 측정결과 및 배풍기 확인 */}
+            {/* Step 8 */}
             {step === 8 && (
               <div className="p-6 flex-1 flex flex-col animate-in slide-in-from-right-4 duration-500 ease-out overflow-y-auto custom-scrollbar md:px-10">
                 <div className="mb-6 md:mb-10 md:text-center">
-                  <h2 className="text-2xl md:text-3xl font-extrabold text-slate-900 mb-2 tracking-tight transition-all">측정결과 및 배풍기 확인</h2>
+                  <h2 className="text-2xl md:text-3xl font-extrabold text-slate-900 mb-2 tracking-tight transition-all">작업 전 가스측정결과 및<br/>보유 배풍기 풍량 확인</h2>
                   <p className="text-slate-500 text-sm md:text-base font-medium leading-relaxed">작업 전 가스 측정결과와 보유중인 배풍기의 성능을 입력해주세요.</p>
                 </div>
                 
-                {/* 데스크탑 2단 그리드 적용 */}
                 <div className="space-y-8 md:grid md:grid-cols-2 md:gap-10 md:space-y-0 transition-all">
-                  {/* 1. 작업 전 산소 및 유해가스농도 측정결과 */}
                   <div>
-                    <h3 className="font-bold text-slate-800 text-base md:text-lg mb-4 flex items-center gap-2"><span className="bg-blue-100 text-blue-600 w-6 h-6 rounded-full flex items-center justify-center text-xs md:text-sm font-black">1</span> 작업 전 가스농도 측정결과</h3>
+                    <h3 className="font-bold text-slate-800 text-base md:text-lg mb-4 flex items-center gap-2"><span className="bg-blue-100 text-blue-600 w-6 h-6 rounded-full flex items-center justify-center text-xs md:text-sm font-black">1</span> 작업 전 산소 및 유해가스농도 측정결과</h3>
                     <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-5">
                       
                       <div className="flex flex-col gap-2">
@@ -784,9 +759,8 @@
                     </div>
                   </div>
 
-                  {/* 2. 보유 풍량 */}
                   <div>
-                    <h3 className="font-bold text-slate-800 text-base md:text-lg mb-4 flex items-center gap-2"><span className="bg-blue-100 text-blue-600 w-6 h-6 rounded-full flex items-center justify-center text-xs md:text-sm font-black">2</span> 보유 배풍기 풍량 <span className="text-blue-500 text-sm">*</span></h3>
+                    <h3 className="font-bold text-slate-800 text-base md:text-lg mb-4 flex items-center gap-2"><span className="bg-blue-100 text-blue-600 w-6 h-6 rounded-full flex items-center justify-center text-xs md:text-sm font-black">2</span> 보유 풍량</h3>
                     <div className="space-y-4">
                       <div className={`transition-all duration-500 overflow-hidden ${parseFloat(fanCapacity) > 0 && parseFloat(fanCapacity) < 5000 ? 'max-h-40 opacity-100 mb-4' : 'max-h-0 opacity-0 mb-0'}`}>
                         <div className="p-4 bg-orange-50 border border-orange-100 rounded-2xl flex items-start gap-3">
@@ -815,13 +789,13 @@
                     disabled={!fanCapacity || parseFloat(fanCapacity) <= 0 || !calDate || !o2 || !h2s || !co2 || !co} 
                     className="w-full bg-blue-600 disabled:bg-slate-100 disabled:text-slate-400 text-white font-bold py-4 rounded-2xl shadow-lg hover:shadow-blue-500/30 disabled:shadow-none active:scale-[0.98] transition-all duration-300 text-lg md:text-xl"
                   >
-                    자율점검 결과 보기
+                    환기계산 결과 보기
                   </button>
                 </div>
               </div>
             )}
 
-            {/* Step 9: 결과 화면 */}
+            {/* Step 9 */}
             {step === 9 && (
               <div className="flex-1 flex flex-col bg-[#F8FAFC] animate-in zoom-in-95 duration-500 ease-out overflow-y-auto custom-scrollbar">
                 <div className="bg-white px-6 py-10 md:py-14 border-b border-slate-100 shadow-sm text-center shrink-0 relative overflow-hidden">
@@ -834,9 +808,7 @@
 
                 <div ref={resultRef} className="p-6 md:p-10 pt-8 bg-[#F8FAFC] flex-1">
                   
-                  {/* 데스크탑 2단 그리드 적용 (요약 박스들) */}
                   <div className="md:grid md:grid-cols-2 md:gap-8 space-y-5 md:space-y-0 mb-5 md:mb-8 transition-all">
-                    {/* 맨홀공간 정보 요약 */}
                     <div className="bg-white border border-slate-100 rounded-2xl p-5 md:p-7 shadow-sm flex flex-col h-full">
                       <h3 className="text-sm md:text-base font-black text-blue-600 tracking-tight mb-4 ml-1">맨홀공간 정보 요약</h3>
                       <div className="space-y-2 md:space-y-3 text-sm md:text-base flex-1">
@@ -844,39 +816,32 @@
                         
                         <div className="flex justify-between items-start py-2 border-b border-slate-50">
                           <span className="text-slate-500 font-medium shrink-0 mr-4 mt-0.5">공간 형태</span>
-                          <div className="font-bold text-slate-800 text-right leading-tight flex flex-col items-end">
+                          <div className="font-bold text-slate-800 text-right leading-tight flex flex-col items-end whitespace-nowrap break-keep">
                             {shape === 'rect' && (
                               <>
                                 <span>직사각형</span>
-                                <span className="text-[11px] md:text-[13px] text-slate-500 font-medium mt-1 break-keep">(가로: {width || 0}m, 세로: {length || 0}m, 높이: {height || 0}m)</span>
+                                <span className="text-[11px] md:text-[13px] text-slate-500 font-medium mt-1">(가로: {width || 0}m, 세로: {length || 0}m, 높이: {height || 0}m)</span>
                               </>
                             )}
                             {shape === 'cyl' && (
                               <>
                                 <span>원통형</span>
-                                <span className="text-[11px] md:text-[13px] text-slate-500 font-medium mt-1 break-keep">(지름: {diameter || 0}m, 높이: {height || 0}m)</span>
+                                <span className="text-[11px] md:text-[13px] text-slate-500 font-medium mt-1">(지름: {diameter || 0}m, 높이: {height || 0}m)</span>
                               </>
                             )}
                             {shape === 'combo' && (
                               <>
                                 <span>결합형</span>
-                                <span className="text-[11px] md:text-xs text-slate-500 font-medium mt-1 whitespace-nowrap">(사각: 가로 {comboRectWidth || 0}m, 세로 {comboRectLength || 0}m, 높이 {comboRectHeight || 0}m</span>
-                                <span className="text-[11px] md:text-xs text-slate-500 font-medium whitespace-nowrap">원형: 지름 {comboCylDiameter || 0}m, 높이 {comboCylHeight || 0}m)</span>
+                                <span className="text-[11px] md:text-[13px] text-slate-500 font-medium mt-1">(사각: 가로 {comboRectWidth || 0}m, 세로 {comboRectLength || 0}m, 높이 {comboRectHeight || 0}m</span>
+                                <span className="text-[11px] md:text-[13px] text-slate-500 font-medium">원형: 지름 {comboCylDiameter || 0}m, 높이 {comboCylHeight || 0}m)</span>
                               </>
                             )}
                           </div>
                         </div>
                         
                         <div className="flex justify-between items-center py-1.5 border-b border-slate-200"><span className="text-slate-500 font-medium">밀폐공간 체적</span><span className="font-bold text-slate-800">{volume.toFixed(2)} <span className="text-xs text-slate-400">m³</span></span></div>
-                        
-                        <div className="flex justify-between items-center py-1.5 border-b border-slate-50">
-                          <span className="text-slate-500 font-medium">작업 전 환기시간</span>
-                          <span className="font-bold text-slate-800">{ventTime} <span className="text-xs text-slate-400">분 {isMinimumForced ? '(이상)' : ''}</span></span>
-                        </div>
-                        <div className="flex justify-between items-center py-1.5">
-                          <span className="text-slate-500 font-medium">작업 중 환기 가동 대수</span>
-                          <span className="font-bold text-slate-800">{displayFanCount}</span>
-                        </div>
+                        <div className="flex justify-between items-center py-1.5 border-b border-slate-50"><span className="text-slate-500 font-medium">작업 전 환기시간</span><span className="font-bold text-slate-800">{ventTime} <span className="text-xs text-slate-400">분 {isMinimumForced ? '(이상)' : ''}</span></span></div>
+                        <div className="flex justify-between items-center py-1.5"><span className="text-slate-500 font-medium">작업 중 환기 가동 대수</span><span className="font-bold text-slate-800">{displayFanCount}</span></div>
                       </div>
                       
                       <div className="mt-5 space-y-2 shrink-0">
@@ -891,7 +856,6 @@
                       </div>
                     </div>
 
-                    {/* 가스 측정 결과 요약 */}
                     <div className="bg-white border border-slate-100 rounded-2xl p-5 md:p-7 shadow-sm flex flex-col h-full">
                       <h3 className="text-sm md:text-base font-black text-blue-600 tracking-tight mb-4 ml-1">가스 측정결과 요약</h3>
                       <div className="space-y-2 md:space-y-3 text-sm md:text-base flex-1">
@@ -915,7 +879,6 @@
                     </div>
                   </div>
 
-                  {/* 데스크탑 2단 그리드 적용 (체크리스트 및 경고) */}
                   <div className="md:grid md:grid-cols-2 md:gap-8 space-y-5 md:space-y-0 transition-all">
                     <div className="bg-white border border-slate-100 rounded-2xl p-5 md:p-7 shadow-sm h-full">
                       <h3 className="text-sm md:text-base font-black text-blue-600 tracking-tight mb-3 ml-1">안전작업 체크리스트 결과</h3>
@@ -991,10 +954,278 @@
                     무상 장비대여 '원콜서비스' 안내 다운로드
                   </button>
                   <div className="flex flex-col space-y-3 md:flex-row md:space-y-0 md:gap-4 w-full">
-                    <button onClick={saveAsImage} className="w-full md:w-1/2 bg-slate-800 hover:bg-slate-700 text-white font-bold py-4 rounded-2xl shadow-lg active:scale-[0.98] transition-all duration-300 text-sm md:text-base flex items-center justify-center gap-2"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>종합결과 저장 후 공유해주세요</button>
-                    <button onClick={reset} className="w-full md:w-1/2 bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-800 font-bold py-4 rounded-2xl active:scale-[0.98] transition-all duration-300 text-sm md:text-base">다시 시작하기</button>
+                    <button onClick={saveAsImage} className="w-full md:w-1/2 bg-slate-800 hover:bg-slate-700 text-white font-bold py-4 rounded-2xl shadow-lg active:scale-[0.98] transition-all duration-300 text-sm md:text-base flex items-center justify-center gap-2"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>종합결과 저장 후 공유</button>
+                    <button onClick={nextStep} className="w-full md:w-1/2 bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-2xl shadow-lg hover:shadow-blue-500/25 active:scale-[0.98] transition-all duration-300 text-sm md:text-base">작업허가서 작성 및 발급</button>
                   </div>
                 </div>
+              </div>
+            )}
+
+            {/* Step 10: 작업허가서 발급 */}
+            {step === 10 && (
+              <div className="flex-1 flex flex-col bg-[#F8FAFC] animate-in slide-in-from-right-4 duration-500 ease-out overflow-y-auto custom-scrollbar">
+                <div className="bg-white px-6 py-6 md:py-8 border-b border-slate-100 shadow-sm shrink-0 relative flex items-center justify-center">
+                  <button onClick={prevStep} className="absolute left-4 md:left-6 p-2 rounded-full hover:bg-slate-100 text-slate-600 transition-colors active:scale-95 z-10">
+                    <svg className="w-6 h-6 md:w-7 md:h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" /></svg>
+                  </button>
+                  <div className="text-center w-full px-8 md:px-12">
+                    <h2 className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight">맨홀공간 작업(계획)허가서</h2>
+                    <p className="text-slate-500 text-[13px] md:text-sm mt-2 font-medium">최종 작업자 명단과 허가자 서명을 완료 후 발급하세요.</p>
+                  </div>
+                </div>
+                
+                <div className="p-6 md:p-10 space-y-6 flex-1 md:max-w-4xl md:mx-auto md:w-full">
+                  <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
+                     <h3 className="text-base font-bold text-slate-800 mb-4 border-b border-slate-100 pb-2">기본 정보</h3>
+                     <div className="space-y-3 text-sm md:text-base">
+                        <div className="flex"><span className="w-28 md:w-36 text-slate-500 font-bold shrink-0">신청인(발신자)</span><span className="font-medium text-slate-900">{formData.sender || '-'}</span></div>
+                        <div className="flex"><span className="w-28 md:w-36 text-slate-500 font-bold shrink-0">작업수행시간</span><span className="font-medium text-slate-900">{formData.workDate || '-'}</span></div>
+                        <div className="flex"><span className="w-28 md:w-36 text-slate-500 font-bold shrink-0">작업장소(위치)</span><span className="font-medium text-slate-900">{formData.location || '-'}</span></div>
+                        <div className="flex"><span className="w-28 md:w-36 text-slate-500 font-bold shrink-0">작업내용</span><span className="font-medium text-slate-900">{formData.workContent || '-'}</span></div>
+                        <div className="flex"><span className="w-28 md:w-36 text-slate-500 font-bold shrink-0">내부 연락방법</span><span className="font-medium text-slate-900">{formData.representative} / {formData.contact}</span></div>
+                     </div>
+                     <div className="mt-4 bg-amber-50 p-3 rounded-lg border border-amber-100">
+                        <p className="text-xs md:text-sm text-amber-800 font-bold leading-relaxed">⚠️ 작업허가는 최대 8시간까지만 유효합니다. 이 허가서는 지정된 장소와 시간에 대해 1회만 유효합니다.</p>
+                     </div>
+                  </div>
+
+                  <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
+                     <div className="flex justify-between items-center mb-4 border-b border-slate-100 pb-2">
+                       <h3 className="text-base font-bold text-slate-800">5. 작업자(측정자) 명단</h3>
+                       <button onClick={handleAddWorker} className="text-sm font-bold text-blue-600 bg-blue-50 px-3 py-1.5 rounded-lg hover:bg-blue-100 transition-colors">+ 인원 추가</button>
+                     </div>
+                     {workers.some(w => w.type === '측정자') && (
+                       <div className="mb-3 text-sm text-blue-600 font-bold bg-blue-50 p-2 rounded">
+                         ※ 산소 및 유해가스농도측정자명을 정확히 적어주세요.
+                       </div>
+                     )}
+                     <div className="space-y-3">
+                        {workers.map((worker, idx) => (
+                           <div key={idx} className="flex gap-2 items-center bg-slate-50 p-2 md:p-3 rounded-xl border border-slate-100">
+                              <select value={worker.type} onChange={(e) => handleWorkerChange(idx, 'type', e.target.value)} className="p-2.5 rounded-lg border border-slate-200 bg-white font-bold text-slate-700 text-sm md:text-base outline-none focus:border-blue-500 shrink-0">
+                                 <option value="작업자">작업자</option>
+                                 <option value="감시인">감시인</option>
+                                 <option value="측정자">측정자</option>
+                              </select>
+                              <input type="text" value={worker.name} onChange={(e) => handleWorkerChange(idx, 'name', e.target.value)} placeholder="성명 입력" className="flex-1 p-2.5 rounded-lg border border-slate-200 bg-white text-sm md:text-base outline-none focus:border-blue-500" />
+                              {workers.length > 1 && (
+                                <button onClick={() => handleRemoveWorker(idx)} className="p-2 text-rose-500 hover:bg-rose-50 rounded-lg shrink-0">
+                                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                </button>
+                              )}
+                           </div>
+                        ))}
+                     </div>
+                  </div>
+
+                  <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
+                     <h3 className="text-base font-bold text-slate-800 mb-4 border-b border-slate-100 pb-2">6. 최종 허가자 승인 (문자 요청)</h3>
+                     <div className="grid grid-cols-2 gap-3 mb-4 md:grid-cols-4">
+                        <input type="text" placeholder="부서" value={approver.dept} onChange={e => setApprover({...approver, dept: e.target.value})} className="p-3 rounded-xl border border-slate-200 bg-slate-50 text-sm md:text-base outline-none focus:border-blue-500 focus:bg-white" />
+                        <input type="text" placeholder="직책" value={approver.title} onChange={e => setApprover({...approver, title: e.target.value})} className="p-3 rounded-xl border border-slate-200 bg-slate-50 text-sm md:text-base outline-none focus:border-blue-500 focus:bg-white" />
+                        <input type="text" placeholder="성명" value={approver.name} onChange={e => setApprover({...approver, name: e.target.value})} className="p-3 rounded-xl border border-slate-200 bg-slate-50 text-sm md:text-base outline-none focus:border-blue-500 focus:bg-white" />
+                        <input type="tel" placeholder="전화번호" value={approver.phone} onChange={e => setApprover({...approver, phone: e.target.value})} className="p-3 rounded-xl border border-slate-200 bg-slate-50 text-sm md:text-base outline-none focus:border-blue-500 focus:bg-white" />
+                     </div>
+                     
+                     <div className="flex flex-col md:flex-row gap-3 items-stretch">
+                       <button onClick={handleSendPermitSMS} className="flex-1 bg-slate-800 hover:bg-slate-700 text-white font-bold py-3.5 md:py-4 rounded-xl shadow-md transition-all text-sm md:text-base flex items-center justify-center gap-2">
+                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
+                         원격 서명 문자(URL) 전송
+                       </button>
+                       <div className={`flex-1 flex items-center justify-center py-3.5 md:py-4 rounded-xl border-2 border-dashed font-bold text-sm md:text-base ${approver.signed ? 'bg-blue-50 border-blue-300 text-blue-600' : 'bg-slate-50 border-slate-300 text-slate-400'}`}>
+                         {approver.signed ? '✅ 전자서명 승인완료' : '서명 대기중...'}
+                       </div>
+                     </div>
+                  </div>
+                </div>
+                
+                <div className="px-6 pt-2 pb-6 shrink-0 md:max-w-2xl md:mx-auto w-full space-y-3">
+                  <button onClick={savePermitAsPDF} className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-2xl shadow-lg active:scale-[0.98] transition-all duration-300 text-lg flex items-center justify-center gap-2">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                    최종 작업허가서 PDF 다운로드
+                  </button>
+                  <button onClick={reset} className="w-full bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-800 font-bold py-4 rounded-2xl active:scale-[0.98] transition-all duration-300 text-base">처음으로 돌아가기</button>
+                </div>
+
+                {/* 10단계 작업허가서 전용 PDF 템플릿 (숨김처리) */}
+                {(() => {
+                  const measurerName = workers.find(w => w.type === '측정자' && w.name.trim() !== '')?.name || formData.inspector || formData.sender || '-';
+                  
+                  let shapeName = '';
+                  let shapeDetails = '';
+                  if(shape === 'rect'){
+                    shapeName = '직사각형'; shapeDetails = `(가로: ${width||0}m, 세로: ${length||0}m, 높이: ${height||0}m)`;
+                  } else if(shape === 'cyl') {
+                    shapeName = '원통형'; shapeDetails = `(지름: ${diameter||0}m, 높이: ${height||0}m)`;
+                  } else if(shape === 'combo') {
+                    shapeName = '결합형'; shapeDetails = `(사각: 가로 ${comboRectWidth||0}m, 세로 ${comboRectLength||0}m, 높이 ${comboRectHeight||0}m / 원형: 지름 ${comboCylDiameter||0}m, 높이 ${comboCylHeight||0}m)`;
+                  }
+
+                  return (
+                  <div style={{ display: 'none', position: 'absolute', left: '-9999px', top: '0', width: '800px', backgroundColor: 'white', padding: '10px 20px', boxSizing: 'border-box' }} ref={permitPdfTemplateRef}>
+                    <h1 style={{ fontSize: '28px', fontWeight: '900', textAlign: 'center', marginBottom: '20px', color: '#000', letterSpacing: '-1px' }}>맨홀공간 작업(계획)허가서</h1>
+                    
+                    <div style={{ display: 'flex', flexWrap: 'wrap', marginBottom: '15px', fontSize: '14px', color: '#000', lineHeight: '1.6' }}>
+                      <div style={{ width: '50%', marginBottom: '4px' }}><strong>ㅇ 신청인:</strong> {formData.sender}</div>
+                      <div style={{ width: '50%', marginBottom: '4px' }}><strong>ㅇ 작업수행시간:</strong> {formData.workDate}</div>
+                      <div style={{ width: '50%', marginBottom: '4px' }}><strong>ㅇ 작업장소(위치):</strong> {formData.location}</div>
+                      <div style={{ width: '50%', marginBottom: '4px' }}><strong>ㅇ 작업내용:</strong> {formData.workContent}</div>
+                      <div style={{ width: '100%', marginBottom: '4px' }}><strong>ㅇ 내부 연락방법:</strong> {formData.representative} / {formData.contact}</div>
+                    </div>
+
+                    <div style={{ padding: '8px', backgroundColor: '#fffbeb', border: '1px solid #fcd34d', marginBottom: '15px', fontSize: '13px', color: '#92400e', fontWeight: 'bold' }}>
+                      작업허가는 최대 8시간까지만 유효합니다. 유해가스의 농도에 따라서 출입시간에 제한이 있을 수도 있습니다. 이 허가서는 지정된 장소와 시간에 대해 1회만 유효합니다.<br/>
+                      <span style={{color: '#000'}}>위 공간에서의 작업을 다음의 조건하에서만 허가함.</span>
+                    </div>
+
+                    <h3 style={{ fontSize: '15px', fontWeight: 'bold', marginBottom: '6px', color: '#000' }}>1. 맨홀공간 정보요약</h3>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', border: '1.5px solid black', marginBottom: '15px', fontSize: '13px', textAlign: 'center' }}>
+                      <tbody>
+                        <tr>
+                          <th style={{ border: '1px solid black', backgroundColor: '#f3f4f6', padding: '6px', width: '20%' }}>맨홀 형태</th>
+                          <td style={{ border: '1px solid black', padding: '6px', width: '30%' }}>{shapeName}</td>
+                          <th style={{ border: '1px solid black', backgroundColor: '#f3f4f6', padding: '6px', width: '20%' }}>맨홀 체적</th>
+                          <td style={{ border: '1px solid black', padding: '6px', width: '30%' }}>
+                            {volume.toFixed(2)} m³<br/><span style={{fontSize:'11px', color:'#555'}}>{shapeDetails}</span>
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+
+                    <h3 style={{ fontSize: '15px', fontWeight: 'bold', marginBottom: '6px', color: '#000' }}>2. 맨홀 안전작업 체크리스트</h3>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', border: '1.5px solid black', marginBottom: '15px', fontSize: '12px', textAlign: 'center' }}>
+                      <thead>
+                        <tr>
+                          <th style={{ border: '1px solid black', backgroundColor: '#f3f4f6', padding: '4px' }}>체크리스트(자율점검)</th>
+                          <th style={{ border: '1px solid black', backgroundColor: '#f3f4f6', padding: '4px', width: '12%' }}>예</th>
+                          <th style={{ border: '1px solid black', backgroundColor: '#f3f4f6', padding: '4px', width: '12%' }}>아니오</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {[
+                          { q: q1, title: '1. 해당 밀폐공간 위치파악, 유해위험요인 파악', fix: '작업 전 해당 장소의 위치와 위험요인을 명확히 파악하세요.' },
+                          { q: q2, title: '2. 작업허가서 발급 및 작업장 게시', fix: '작업 전 반드시 허가서를 발급받고 작업장에 게시하세요.' },
+                          { q: q3, title: '3. 출입금지 표지 게시', fix: '인근 잘 보이는 곳에 출입금지 표지를 즉시 게시하세요.' },
+                          { q: q4, title: '4. 산소 및 유해가스 작업전·중 측정', fix: '산소 및 유해가스를 작업 전은 물론 작업 중에도 지속적으로 측정하세요.' },
+                          { q: q5, title: '5. 환기팬 가동 및 성능 확인', fix: '보유 배풍기 성능을 파악하고, 작업 전/중 환기를 지속적으로 실시하세요.' },
+                          { q: q6, title: '6. 호흡용보호구 비치', fix: '밀폐공간 작업용 송기마스크 등 호흡용보호구를 반드시 비치하세요.' },
+                          { q: q7, title: '7. 감시인 배치 및 비상체계 마련', fix: '전담 감시인을 배치하고 내외부 연락 및 비상 조치 체계를 마련하세요.' },
+                          { q: q8, title: '8. 입·퇴장 인원 점검', fix: '출입 시 근로자 인원을 철저히 점검하여 인원 누락을 방지하세요.' },
+                          { q: q9, title: '9. 안전방법(TBM) 교육', fix: '작업 전 작업자와 감시인에게 안전한 작업방법(TBM)을 교육하세요.' },
+                          { q: q10, title: '10. 구조장비 설치/구조훈련', fix: '삼각대 등 구조장비를 설치하고 사전에 긴급구조훈련을 실시하세요.' }
+                        ].map((item, i) => (
+                          <React.Fragment key={i}>
+                            <tr>
+                              <td style={{ border: '1px solid black', padding: '3px 8px', textAlign: 'left' }}>{item.title}</td>
+                              <td style={{ border: '1px solid black', padding: '3px', color: '#2563EB', fontWeight: item.q==='yes'?'bold':'normal' }}>{item.q === 'yes' ? 'O' : ''}</td>
+                              <td style={{ border: '1px solid black', padding: '3px', color: '#DC2626', fontWeight: item.q==='no'?'bold':'normal' }}>{item.q === 'no' ? 'O' : ''}</td>
+                            </tr>
+                            {item.q === 'no' && (
+                              <tr>
+                                <td colSpan="3" style={{ border: '1px solid black', padding: '3px 8px', textAlign: 'left', color: '#DC2626', fontSize: '11px', backgroundColor: '#fef2f2' }}>
+                                  <strong>[조치사항]</strong> {item.fix}
+                                </td>
+                              </tr>
+                            )}
+                          </React.Fragment>
+                        ))}
+                      </tbody>
+                    </table>
+
+                    <h3 style={{ fontSize: '15px', fontWeight: 'bold', marginBottom: '6px', color: '#000' }}>3. 산소 및 유해가스 농도 측정 결과</h3>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', border: '1.5px solid black', marginBottom: '15px', fontSize: '13px', textAlign: 'center' }}>
+                      <thead>
+                        <tr>
+                          <th style={{ border: '1px solid black', backgroundColor: '#f3f4f6', padding: '6px', width: '20%' }}>측정물질명</th>
+                          <th style={{ border: '1px solid black', backgroundColor: '#f3f4f6', padding: '6px', width: '25%' }}>측정농도</th>
+                          <th style={{ border: '1px solid black', backgroundColor: '#f3f4f6', padding: '6px', width: '20%' }}>측정자</th>
+                          <th style={{ border: '1px solid black', backgroundColor: '#f3f4f6', padding: '6px', width: '35%' }}>허가기준 농도</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr>
+                          <th style={{ border: '1px solid black', backgroundColor: '#f9fafb', padding: '4px' }}>산소 (O₂)</th>
+                          <td style={{ border: '1px solid black', padding: '4px' }}>{o2} %</td>
+                          <td rowSpan="4" style={{ border: '1px solid black', padding: '4px', verticalAlign: 'middle', fontWeight: 'bold' }}>{measurerName}</td>
+                          <td style={{ border: '1px solid black', padding: '4px', textAlign: 'left', paddingLeft: '8px' }}>18% 이상 23.5% 미만</td>
+                        </tr>
+                        <tr>
+                          <th style={{ border: '1px solid black', backgroundColor: '#f9fafb', padding: '4px' }}>황화수소 (H₂S)</th>
+                          <td style={{ border: '1px solid black', padding: '4px' }}>{h2s} ppm</td>
+                          <td style={{ border: '1px solid black', padding: '4px', textAlign: 'left', paddingLeft: '8px' }}>10ppm 이하</td>
+                        </tr>
+                        <tr>
+                          <th style={{ border: '1px solid black', backgroundColor: '#f9fafb', padding: '4px' }}>이산화탄소 (CO₂)</th>
+                          <td style={{ border: '1px solid black', padding: '4px' }}>{co2} ppm</td>
+                          <td style={{ border: '1px solid black', padding: '4px', textAlign: 'left', paddingLeft: '8px' }}>1.5% 미만 (15,000ppm)</td>
+                        </tr>
+                        <tr>
+                          <th style={{ border: '1px solid black', backgroundColor: '#f9fafb', padding: '4px' }}>일산화탄소 (CO)</th>
+                          <td style={{ border: '1px solid black', padding: '4px' }}>{co} ppm</td>
+                          <td style={{ border: '1px solid black', padding: '4px', textAlign: 'left', paddingLeft: '8px' }}>30ppm 미만</td>
+                        </tr>
+                      </tbody>
+                    </table>
+
+                    <h3 style={{ fontSize: '15px', fontWeight: 'bold', marginBottom: '6px', color: '#000' }}>4. 특별조치필요사항</h3>
+                    <div style={{ border: '1.5px solid black', padding: '10px', minHeight: '40px', marginBottom: '15px', fontSize: '13px', whiteSpace: 'pre-wrap', textAlign: 'left' }}>
+                      {formData.remarks || '특이사항 없음'}
+                    </div>
+
+                    <div style={{ display: 'flex', gap: '20px' }}>
+                      <div style={{ flex: '1' }}>
+                        <h3 style={{ fontSize: '15px', fontWeight: 'bold', marginBottom: '6px', color: '#000' }}>5. 작업자 명단</h3>
+                        <table style={{ width: '100%', borderCollapse: 'collapse', border: '1.5px solid black', fontSize: '13px', textAlign: 'center' }}>
+                          <thead>
+                            <tr>
+                              <th style={{ border: '1px solid black', backgroundColor: '#f3f4f6', padding: '6px', width: '30%' }}>구분</th>
+                              <th style={{ border: '1px solid black', backgroundColor: '#f3f4f6', padding: '6px', width: '40%' }}>성명</th>
+                              <th style={{ border: '1px solid black', backgroundColor: '#f3f4f6', padding: '6px', width: '30%' }}>서명</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {workers.map((w, i) => (
+                              <tr key={i}>
+                                <td style={{ border: '1px solid black', padding: '6px' }}>{w.type}</td>
+                                <td style={{ border: '1px solid black', padding: '6px' }}>{w.name}</td>
+                                <td style={{ border: '1px solid black', padding: '6px' }}>(서명)</td>
+                              </tr>
+                            ))}
+                            {workers.length < 3 && Array(3 - workers.length).fill().map((_, i) => (
+                              <tr key={'empty'+i}>
+                                <td style={{ border: '1px solid black', padding: '13px' }}></td><td style={{ border: '1px solid black' }}></td><td style={{ border: '1px solid black' }}></td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                      
+                      <div style={{ flex: '1' }}>
+                        <h3 style={{ fontSize: '15px', fontWeight: 'bold', marginBottom: '6px', color: '#000' }}>6. 최종 허가자</h3>
+                        <table style={{ width: '100%', borderCollapse: 'collapse', border: '1.5px solid black', fontSize: '13px', textAlign: 'center' }}>
+                          <thead>
+                            <tr>
+                              <th style={{ border: '1px solid black', backgroundColor: '#f3f4f6', padding: '6px', width: '25%' }}>부서</th>
+                              <th style={{ border: '1px solid black', backgroundColor: '#f3f4f6', padding: '6px', width: '25%' }}>직책</th>
+                              <th style={{ border: '1px solid black', backgroundColor: '#f3f4f6', padding: '6px', width: '25%' }}>성명</th>
+                              <th style={{ border: '1px solid black', backgroundColor: '#f3f4f6', padding: '6px', width: '25%' }}>서명</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            <tr>
+                              <td style={{ border: '1px solid black', padding: '13px 4px' }}>{approver.dept}</td>
+                              <td style={{ border: '1px solid black', padding: '13px 4px' }}>{approver.title}</td>
+                              <td style={{ border: '1px solid black', padding: '13px 4px' }}>{approver.name}</td>
+                              <td style={{ border: '1px solid black', padding: '13px 4px', color: '#2563EB', fontWeight: 'bold', fontSize: '11px' }}>{approver.signed ? '(전자서명 완료)' : '(서명)'}</td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+
+                  </div>
+                  );
+                })()}
               </div>
             )}
 
@@ -1012,7 +1243,7 @@
               </div>
             )}
 
-            {/* 수동 앱 설치 안내 모달 */}
+            {/* PWA iOS 설치 안내 가이드 */}
             {showInstallInstructions && (
               <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm z-[100] flex items-center justify-center p-4 animate-in fade-in duration-300">
                 <div className="bg-white rounded-[2.5rem] p-6 md:p-8 w-full max-w-sm md:max-w-md shadow-2xl relative animate-in zoom-in-95 duration-300">
