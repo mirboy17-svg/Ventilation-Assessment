@@ -87,52 +87,57 @@
       const [step, setStep] = useState(1);
       
       const [formData, setFormData] = useState({
-        // 링크로 접속했을 때 파라미터(?action=approve...)를 감지하여 자동 승인 처리하는 로직
-    useEffect(() => {
-      const params = new URLSearchParams(window.location.search);
-      const action = params.get('action');
-      const id = params.get('id');
-      const approverName = params.get('approverName');
+        receiver: '', sender: '', companyName: '', representative: '',
+        location: '', client: '', contact: '', workDate: '',
+        workContent: '', otherInfo: '', remarks: '', inspector: ''
+      });
 
-      if (action === 'approve' && id) {
-        const gasUrl = 'https://script.google.com/macros/s/AKfycbzol98mGAggX5MAIllHg1KgRAzdrvSTN1cqYrle_PTGFdFZQUyrG4Jd8sJDVcKZAEHJhg/exec';
-        
-        // 화면을 심플한 승인 확인 페이지로 변경하기 위해 DOM 조작 또는 상태 관리
-        document.body.innerHTML = `
-          <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100vh; font-family:sans-serif; text-align:center; padding:20px; background:#F4F7FB;">
-            <div style="background:white; padding:40px; border-radius:24px; box-shadow:0 10px 25px rgba(0,0,0,0.05); max-width:400px; width:100%;">
-              <h2 style="font-size:22px; font-weight:bold; color:#1e293b; margin-bottom:12px;">맨홀작업 안전지킴이</h2>
-              <p style="font-size:15px; color:#64748b; margin-bottom:24px;">최종 승인을 진행하시겠습니까?<br/><b>(${decodeURIComponent(approverName || '허가자')}님)</b></p>
-              <button id="confirmBtn" style="background:#2563eb; color:white; border:none; width:100%; padding:15px; border-radius:12px; font-size:16px; font-weight:bold; cursor:pointer; margin-bottom:10px;">확인 (최종 승인)</button>
-              <div id="statusMsg" style="font-size:14px; color:#059669; font-weight:bold; margin-top:15px;"></div>
+      // 링크로 접속했을 때 파라미터(?action=approve...)를 감지하여 자동 승인 처리하는 로직
+      useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+        const action = params.get('action');
+        const id = params.get('id');
+        const approverName = params.get('approverName');
+
+        if (action === 'approve' && id) {
+          const gasUrl = 'https://script.google.com/macros/s/AKfycbzol98mGAggX5MAIllHg1KgRAzdrvSTN1cqYrle_PTGFdFZQUyrG4Jd8sJDVcKZAEHJhg/exec';
+          
+          document.body.innerHTML = `
+            <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100vh; font-family:sans-serif; text-align:center; padding:20px; background:#F4F7FB;">
+              <div style="background:white; padding:40px; border-radius:24px; box-shadow:0 10px 25px rgba(0,0,0,0.05); max-width:400px; width:100%;">
+                <h2 style="font-size:22px; font-weight:bold; color:#1e293b; margin-bottom:12px;">맨홀작업 안전지킴이</h2>
+                <p style="font-size:15px; color:#64748b; margin-bottom:24px;">최종 승인을 진행하시겠습니까?<br/><b>(${decodeURIComponent(approverName || '허가자')}님)</b></p>
+                <button id="confirmBtn" style="background:#2563eb; color:white; border:none; width:100%; padding:15px; border-radius:12px; font-size:16px; font-weight:bold; cursor:pointer; margin-bottom:10px;">확인 (최종 승인)</button>
+                <div id="statusMsg" style="font-size:14px; color:#059669; font-weight:bold; margin-top:15px;"></div>
+              </div>
             </div>
-          </div>
-        `;
+          `;
 
-        document.getElementById('confirmBtn').onclick = () => {
-          document.getElementById('confirmBtn').innerText = '처리 중...';
-          document.getElementById('confirmBtn').disabled = true;
+          document.getElementById('confirmBtn').onclick = () => {
+            document.getElementById('confirmBtn').innerText = '처리 중...';
+            document.getElementById('confirmBtn').disabled = true;
 
-          fetch(`${gasUrl}?action=approve&id=${id}&approverName=${encodeURIComponent(approverName || '승인자')}`)
-            .then(res => res.json())
-            .then(data => {
-              if (data.success) {
-                document.getElementById('statusMsg.innerHTML') = '✅ 최종 승인이 완료되었습니다!<br/>창을 닫으셔도 됩니다.';
-                document.getElementById('confirmBtn').style.background = '#059669';
-                document.getElementById('confirmBtn').innerText = '승인 완료됨';
-              } else {
-                alert(data.message || '이미 처리되었거나 오류가 발생했습니다.');
-                document.getElementById('confirmBtn').innerText = '승인 불가';
-              }
-            })
-            .catch(err => {
-              alert('네트워크 오류가 발생했습니다.');
-              document.getElementById('confirmBtn').disabled = false;
-              document.getElementById('confirmBtn').innerText = '확인 (최종 승인)';
-            });
-        };
-      }
-    }, []);
+            fetch(`${gasUrl}?action=approve&id=${id}&approverName=${encodeURIComponent(approverName || '승인자')}`)
+              .then(res => res.json())
+              .then(data => {
+                if (data.success) {
+                  document.getElementById('statusMsg').innerHTML = '✅ 최종 승인이 완료되었습니다!<br/>창을 닫으셔도 됩니다.';
+                  document.getElementById('confirmBtn').style.background = '#059669';
+                  document.getElementById('confirmBtn').innerText = '승인 완료됨';
+                } else {
+                  alert(data.message || '이미 처리되었거나 오류가 발생했습니다.');
+                  document.getElementById('confirmBtn').innerText = '승인 불가';
+                }
+              })
+              .catch(err => {
+                alert('네트워크 오류가 발생했습니다.');
+                document.getElementById('confirmBtn').disabled = false;
+                document.getElementById('confirmBtn').innerText = '확인 (최종 승인)';
+              });
+          };
+        }
+      }, []);
+
       const formRef = useRef(null);
       const pdfTemplateRef = useRef(null);
 
@@ -281,13 +286,13 @@
         const permitId = 'permit_' + Date.now();
         const gasUrl = 'https://script.google.com/macros/s/AKfycbzol98mGAggX5MAIllHg1KgRAzdrvSTN1cqYrle_PTGFdFZQUyrG4Jd8sJDVcKZAEHJhg/exec';
 
-        // 1. 구글 시트(DB)에 '대기중' 상태로 등록 요청 (CORS 우회 no-cors 적용)
+        // 1. 구글 시트(DB)에 '대기중' 상태로 등록 요청
         fetch(`${gasUrl}?action=create&id=${permitId}&location=${encodeURIComponent(formData.location)}`, {
           method: 'POST',
           mode: 'no-cors'
         }).catch(err => console.log('DB 등록 요청 완료'));
 
-        // 2. 문자 내용 구성 (요청하신 4가지 항목 포함)
+        // 2. 문자 내용 구성
         const message = `[맨홀작업 안전지킴이]  
 작업허가서 승인 요청입니다.
 - 작업장소(위치) : ${formData.location || '-'}
@@ -300,7 +305,7 @@ https://ventilation-assessment.vercel.app/?action=approve&id=${permitId}&approve
 
         window.location.href = `sms:${approver.phone}?body=${encodeURIComponent(message)}`;
 
-        // 3. 구글 시트 상태를 실시간 체크하여 승인이 떨어지면 화면에 반영하는 폴링(Polling) 로직 시작
+        // 3. 구글 시트 상태를 실시간 체크하여 승인이 떨어지면 화면에 반영
         const checkInterval = setInterval(() => {
           fetch(`${gasUrl}?action=check&id=${permitId}`)
             .then(res => res.json())
@@ -312,7 +317,7 @@ https://ventilation-assessment.vercel.app/?action=approve&id=${permitId}&approve
               }
             })
             .catch(err => console.log('상태 확인 중...'));
-        }, 3000); // 3초마다 구글 시트 상태 확인
+        }, 3000);
       };
 
       const saveAsPDF = () => {
@@ -356,13 +361,11 @@ https://ventilation-assessment.vercel.app/?action=approve&id=${permitId}&approve
           const pdfWidth = pdf.internal.pageSize.getWidth();
           const pdfHeight = pdf.internal.pageSize.getHeight();
           
-          // 이미지가 A4 높이를 초과하더라도 무조건 A4 1장에 맞게 비율 축소
           let imgHeight = (canvas.height * pdfWidth) / canvas.width;
           if (imgHeight > pdfHeight) {
              imgHeight = pdfHeight;
           }
 
-          // 상단 여백 제거 (0, 0 배치)
           pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, imgHeight);
           const date = new Date();
           const dateStr = `${date.getFullYear().toString().slice(-2)}${(date.getMonth()+1).toString().padStart(2,'0')}${date.getDate().toString().padStart(2,'0')}`;
@@ -579,7 +582,7 @@ https://ventilation-assessment.vercel.app/?action=approve&id=${permitId}&approve
                     </tbody>
                   </table>
                   <div style={{ marginTop: '12px', fontSize: '14.5px', fontWeight: 'bold', color: '#2563EB', textAlign: 'left' }}>
-                          ※ 관할 노동관서와 협의하여 자유로운 서식으로 오픈채팅방, 문자 등으로 송부 가능
+                        ※ 관할 노동관서와 협의하여 자유로운 서식으로 오픈채팅방, 문자 등으로 송부 가능
                   </div>
                 </div>
 
@@ -651,7 +654,7 @@ https://ventilation-assessment.vercel.app/?action=approve&id=${permitId}&approve
                     </div>
                   ))}
                 </div>
-                <div className="mt-auto pt-4 pb-2 bg-transparent shrink-0 md:max-md md:mx-auto w-full">
+                <div className="mt-auto pt-4 pb-2 bg-transparent shrink-0 md:max-w-md md:mx-auto w-full">
                   <button onClick={nextStep} disabled={!q1 || !q2 || !q3 || !q4 || !q5 || !q6 || !q7 || !q8 || !q9 || !q10} className="w-full bg-blue-600 disabled:bg-slate-200 disabled:text-slate-400 text-white font-bold py-4 rounded-2xl shadow-lg hover:shadow-blue-500/30 disabled:shadow-none active:scale-[0.98] transition-all duration-300 text-lg">평가 리포트 확인</button>
                 </div>
               </div>
@@ -720,7 +723,7 @@ https://ventilation-assessment.vercel.app/?action=approve&id=${permitId}&approve
                   <a href="https://www.youtube.com/watch?v=pjrIZcxkjTA" target="_blank" rel="noopener noreferrer" className="flex-1 transition-transform hover:scale-105 active:scale-95">
                     <div className="bg-white p-2 rounded-xl border border-slate-200 shadow-sm text-center h-full flex flex-col justify-between">
                       <div className="flex-1 flex flex-col items-center justify-center border border-slate-100 rounded-lg mb-1 bg-slate-50 overflow-hidden relative">
-                         <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://youtu.be/pjrIZcxkjTA" alt="맨홀질식예방 QR" className="w-full p-2 object-contain mix-blend-multiply" />
+                         <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://www.youtube.com/watch?v=pjrIZcxkjTA" alt="맨홀질식예방 QR" className="w-full p-2 object-contain mix-blend-multiply" />
                          <div className="absolute bottom-0 inset-x-0 bg-slate-800/80 backdrop-blur-sm text-white text-[10px] md:text-xs font-bold py-1.5">맨홀질식예방</div>
                       </div>
                       <span className="text-[11px] md:text-xs font-bold text-slate-600 shrink-0">👆 영상 이동</span>
@@ -1142,13 +1145,13 @@ https://ventilation-assessment.vercel.app/?action=approve&id=${permitId}&approve
                      </div>
                      
                      <div className="flex flex-col md:flex-row gap-3 items-stretch">
-                       <button onClick={handleSendPermitSMS} className="flex-1 bg-slate-800 hover:bg-slate-700 text-white font-bold py-3.5 md:py-4 rounded-xl shadow-md transition-all text-sm md:text-base flex items-center justify-center gap-2">
-                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
-                         원격 승인 문자(URL) 전송
-                       </button>
-                       <div className={`flex-1 flex items-center justify-center py-3.5 md:py-4 rounded-xl border-2 border-dashed font-bold text-sm md:text-base ${approver.signed ? 'bg-blue-50 border-blue-300 text-blue-600' : 'bg-slate-50 border-slate-300 text-slate-400'}`}>
-                         {approver.signed ? `✅ ${approver.name || '책임자'} (승인완료)` : '서명 대기중...'}
-                       </div>
+                        <button onClick={handleSendPermitSMS} className="flex-1 bg-slate-800 hover:bg-slate-700 text-white font-bold py-3.5 md:py-4 rounded-xl shadow-md transition-all text-sm md:text-base flex items-center justify-center gap-2">
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
+                          원격 승인 문자(URL) 전송
+                        </button>
+                        <div className={`flex-1 flex items-center justify-center py-3.5 md:py-4 rounded-xl border-2 border-dashed font-bold text-sm md:text-base ${approver.signed ? 'bg-blue-50 border-blue-300 text-blue-600' : 'bg-slate-50 border-slate-300 text-slate-400'}`}>
+                          {approver.signed ? `✅ ${approver.name || '책임자'} (승인완료)` : '서명 대기중...'}
+                        </div>
                      </div>
                   </div>
                 </div>
