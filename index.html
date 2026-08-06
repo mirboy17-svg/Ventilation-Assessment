@@ -87,10 +87,52 @@
       const [step, setStep] = useState(1);
       
       const [formData, setFormData] = useState({
-        receiver: '', sender: '', companyName: '', representative: '',
-        location: '', client: '', contact: '', workDate: '',
-        workContent: '', otherInfo: '', remarks: '', inspector: ''
-      });
+        // 링크로 접속했을 때 파라미터(?action=approve...)를 감지하여 자동 승인 처리하는 로직
+    useEffect(() => {
+      const params = new URLSearchParams(window.location.search);
+      const action = params.get('action');
+      const id = params.get('id');
+      const approverName = params.get('approverName');
+
+      if (action === 'approve' && id) {
+        const gasUrl = 'https://script.google.com/macros/s/AKfycbzol98mGAggX5MAIllHg1KgRAzdrvSTN1cqYrle_PTGFdFZQUyrG4Jd8sJDVcKZAEHJhg/exec';
+        
+        // 화면을 심플한 승인 확인 페이지로 변경하기 위해 DOM 조작 또는 상태 관리
+        document.body.innerHTML = `
+          <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100vh; font-family:sans-serif; text-align:center; padding:20px; background:#F4F7FB;">
+            <div style="background:white; padding:40px; border-radius:24px; box-shadow:0 10px 25px rgba(0,0,0,0.05); max-width:400px; width:100%;">
+              <h2 style="font-size:22px; font-weight:bold; color:#1e293b; margin-bottom:12px;">맨홀작업 안전지킴이</h2>
+              <p style="font-size:15px; color:#64748b; margin-bottom:24px;">최종 승인을 진행하시겠습니까?<br/><b>(${decodeURIComponent(approverName || '허가자')}님)</b></p>
+              <button id="confirmBtn" style="background:#2563eb; color:white; border:none; width:100%; padding:15px; border-radius:12px; font-size:16px; font-weight:bold; cursor:pointer; margin-bottom:10px;">확인 (최종 승인)</button>
+              <div id="statusMsg" style="font-size:14px; color:#059669; font-weight:bold; margin-top:15px;"></div>
+            </div>
+          </div>
+        `;
+
+        document.getElementById('confirmBtn').onclick = () => {
+          document.getElementById('confirmBtn').innerText = '처리 중...';
+          document.getElementById('confirmBtn').disabled = true;
+
+          fetch(`${gasUrl}?action=approve&id=${id}&approverName=${encodeURIComponent(approverName || '승인자')}`)
+            .then(res => res.json())
+            .then(data => {
+              if (data.success) {
+                document.getElementById('statusMsg.innerHTML') = '✅ 최종 승인이 완료되었습니다!<br/>창을 닫으셔도 됩니다.';
+                document.getElementById('confirmBtn').style.background = '#059669';
+                document.getElementById('confirmBtn').innerText = '승인 완료됨';
+              } else {
+                alert(data.message || '이미 처리되었거나 오류가 발생했습니다.');
+                document.getElementById('confirmBtn').innerText = '승인 불가';
+              }
+            })
+            .catch(err => {
+              alert('네트워크 오류가 발생했습니다.');
+              document.getElementById('confirmBtn').disabled = false;
+              document.getElementById('confirmBtn').innerText = '확인 (최종 승인)';
+            });
+        };
+      }
+    }, []);
       const formRef = useRef(null);
       const pdfTemplateRef = useRef(null);
 
@@ -231,26 +273,46 @@
           alert('최종 허가자의 전화번호를 입력해주세요.');
           return;
         }
-        const appUrl = window.location.origin + window.location.pathname;
-        const signUrl = `${appUrl}?action=sign&name=${encodeURIComponent(approver.name || '책임자')}`;
-        
-        // 요청하신 SMS 포맷 적용
-        const message = `[맨홀작업 안전지킴이]
+        if (!approver.name) {
+          alert('최종 허가자의 성명을 입력해주세요.');
+          return;
+        }
+
+        const permitId = 'permit_' + Date.now();
+        const gasUrl = 'https://script.google.com/macros/s/AKfycbzol98mGAggX5MAIllHg1KgRAzdrvSTN1cqYrle_PTGFdFZQUyrG4Jd8sJDVcKZAEHJhg/exec';
+
+        // 1. 구글 시트(DB)에 '대기중' 상태로 등록 요청 (CORS 우회 no-cors 적용)
+        fetch(`${gasUrl}?action=create&id=${permitId}&location=${encodeURIComponent(formData.location)}`, {
+          method: 'POST',
+          mode: 'no-cors'
+        }).catch(err => console.log('DB 등록 요청 완료'));
+
+        // 2. 문자 내용 구성 (요청하신 4가지 항목 포함)
+        const message = `[맨홀작업 안전지킴이]  
 작업허가서 승인 요청입니다.
-- 작업장소(위치) : ${formData.location || '미입력'}
-- 작업내용 : ${formData.workContent || '미입력'}
-- 작업수행시간 : ${formData.workDate || '미입력'}
-- 산소및유해가스농도측정결과(4개항목결과) : 산소(${o2 || 0}%), 황화수소(${h2s || 0}ppm), 이산화탄소(${co2 || 0}ppm), 일산화탄소(${co || 0}ppm)
+- 작업장소(위치) : ${formData.location || '-'}
+- 작업내용 : ${formData.workContent || '-'}
+- 작업수행시간 : ${formData.workDate || '-'}
+- 산소및유해가스농도측정결과(4개항목결과) : O2 ${o2 || '-'}%, H2S ${h2s || '-'}ppm, CO2 ${co2 || '-'}ppm, CO ${co || '-'}ppm
 
 아래의 '확인'을 누르시면 최종 승인됩니다.
-${signUrl}`;
+https://ventilation-assessment.vercel.app/?action=approve&id=${permitId}&approverName=${encodeURIComponent(approver.name)}`;
 
         window.location.href = `sms:${approver.phone}?body=${encodeURIComponent(message)}`;
-        
-        // DB가 없는 정적 웹앱이므로 시연/테스트를 위해 5초 뒤 자동 서명완료 처리 (시뮬레이션)
-        setTimeout(() => {
-          setApprover(prev => ({ ...prev, signed: true }));
-        }, 5000);
+
+        // 3. 구글 시트 상태를 실시간 체크하여 승인이 떨어지면 화면에 반영하는 폴링(Polling) 로직 시작
+        const checkInterval = setInterval(() => {
+          fetch(`${gasUrl}?action=check&id=${permitId}`)
+            .then(res => res.json())
+            .then(data => {
+              if (data.success && data.status === '승인완료') {
+                setApprover(prev => ({ ...prev, signed: true, name: data.approver || prev.name }));
+                clearInterval(checkInterval);
+                alert('최종 허가자가 승인을 완료하였습니다!');
+              }
+            })
+            .catch(err => console.log('상태 확인 중...'));
+        }, 3000); // 3초마다 구글 시트 상태 확인
       };
 
       const saveAsPDF = () => {
