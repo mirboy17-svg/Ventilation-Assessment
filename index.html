@@ -179,7 +179,7 @@
           alert('최종 허가자의 전화번호를 입력해주세요.');
           return;
         }
-        const message = `[맨홀작업 안전지킴이]\n\n작업허가서 승인 요청입니다.\n- 장소: ${formData.location}\n- 내용: ${formData.workContent}\n\n아래 링크를 눌러 최종 서명을 진행해주세요.\nhttps://ventilation-assessment.vercel.app/permit-sign`;
+        const message = `[맨홀작업 안전지킴이]\n\n작업허가서 승인 요청입니다.\n- 장소: ${formData.location}\n- 내용: ${formData.workContent}\n\n아래 링크를 눌러 최종 서명을 진행해주세요.\nhttps://ventilation-assessment.vercel.app/?action=sign`;
         window.location.href = `sms:${approver.phone}?body=${encodeURIComponent(message)}`;
         
         // 원격 서명 시뮬레이션
