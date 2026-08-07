@@ -1269,8 +1269,8 @@ https://ventilation-assessment.vercel.app/?action=approve&id=${permitId}&approve
               <div className="flex-1 flex flex-col bg-[#F8FAFC] animate-in slide-in-from-right-4 duration-500 ease-out overflow-y-auto custom-scrollbar relative">
                 <div className="bg-white px-6 py-6 md:py-8 border-b border-slate-100 shadow-sm shrink-0 relative flex items-center justify-center">
                   <div className="text-center w-full px-8 md:px-12">
-                    <h2 className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight">맨홀공간 작업허가서</h2>
-                    <p className="text-slate-500 text-[13px] md:text-sm mt-2 font-medium">맨홀 작업자(감시인), 측정자 명단과 최종허가자 서명을 완료 후 작업허가서를 발급하세요.</p>
+                    <h2 className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight">맨홀공간 작업(계획)허가서</h2>
+                    <p className="text-slate-500 text-[13px] md:text-sm mt-2 font-medium">최종 작업자 명단과 허가자 서명을 완료 후 발급하세요.</p>
                   </div>
                 </div>
                 
@@ -1340,20 +1340,20 @@ https://ventilation-assessment.vercel.app/?action=approve&id=${permitId}&approve
                      </div>
                      
                      <div className="flex flex-col md:flex-row gap-3 items-stretch">
-                        <button onClick={handleSendPermitSMS} className="flex-1 bg-slate-800 hover:bg-slate-700 text-white font-bold py-3.5 md:py-4 rounded-xl shadow-md transition-all text-sm md:text-base flex items-center justify-center gap-2">
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
-                          승인 요청 알림문자 발송
-                        </button>
-                        <div className="flex-1 flex items-center justify-center">
-                           {approver.signed ? (
-                              <div className="w-full flex gap-2">
-                                 <button onClick={() => setApprover({...approver, signed: false})} className="py-3 px-4 rounded-xl font-bold text-sm bg-slate-200 text-slate-600 hover:bg-slate-300 transition-colors shrink-0">수정</button>
-                                 <div className="flex-1 py-3 px-4 rounded-xl font-bold text-sm bg-blue-50 text-blue-600 border border-blue-100 flex items-center justify-center gap-1.5">서명완료</div>
-                              </div>
-                           ) : (
-                              <button onClick={() => { if(!approver.name.trim()){ alert('성명을 먼저 입력해주세요.'); return; } setApprover({...approver, signed: true}); }} className="w-full bg-slate-800 hover:bg-slate-700 text-white font-bold py-3.5 px-5 rounded-xl transition-colors flex items-center justify-center gap-1.5 text-sm md:text-base">서명확인</button>
-                           )}
-                        </div>
+                       <button onClick={handleSendPermitSMS} className="flex-1 bg-slate-800 hover:bg-slate-700 text-white font-bold py-3.5 md:py-4 rounded-xl shadow-md transition-all text-sm md:text-base flex items-center justify-center gap-2">
+                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
+                         승인 요청 알림문자 발송
+                       </button>
+                       <div className="flex-1 flex items-center justify-center">
+                          {approver.signed ? (
+                             <button onClick={() => setApprover({...approver, signed: false})} className="w-full bg-blue-50 text-blue-600 border border-blue-200 font-bold py-3.5 px-5 rounded-xl transition-colors flex items-center justify-center gap-1.5 text-sm md:text-base">
+                               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7"></path></svg>
+                               서명완료
+                             </button>
+                          ) : (
+                             <button onClick={() => { if(!approver.name.trim()){ alert('성명을 먼저 입력해주세요.'); return; } setApprover({...approver, signed: true}); }} className="w-full bg-slate-800 hover:bg-slate-700 text-white font-bold py-3.5 px-5 rounded-xl transition-colors flex items-center justify-center gap-1.5 text-sm md:text-base">서명확인</button>
+                          )}
+                       </div>
                      </div>
                   </div>
                 </div>
