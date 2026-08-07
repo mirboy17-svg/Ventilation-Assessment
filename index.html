@@ -642,9 +642,9 @@ https://ventilation-assessment.vercel.app/?action=approve&id=${permitId}&approve
             {step === 1 && (
               <div className="flex flex-col flex-1 pb-6 pt-10 animate-in fade-in duration-700 ease-out h-full max-h-[100dvh] relative md:justify-center">
                 <div className="text-center w-full space-y-3 px-6 mb-6 shrink-0 mt-4 md:mt-0">
-                  <span className="inline-block py-1.5 px-4 rounded-full bg-blue-50 text-blue-600 text-xs font-bold tracking-wide mb-1">안전보건공단 KOSHA GUIDE 기준</span>
+                  <span className="inline-block py-1.5 px-4 rounded-full bg-blue-50 text-blue-600 text-xs font-bold tracking-wide mb-1">경남지역 맨홀 질식사고 예방 전담 관리</span>
                   <h1 className="text-[2.2rem] md:text-5xl font-extrabold text-slate-900 tracking-tight leading-tight transition-all">맨홀작업 안전조치 <br className="md:hidden"/><span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-500">맨홀지킴이</span></h1>
-                  <p className="text-slate-500 text-sm md:text-base mt-3 font-medium px-4 md:max-w-lg md:mx-auto transition-all">맨홀 작업 사전일정 송부 및 작업 전 필수적인 맨홀 안전점검을 지원합니다.</p>
+                  <p className="text-slate-500 text-sm md:text-base mt-3 font-medium px-4 md:max-w-lg md:mx-auto transition-all">경남지역 맨홀 작업 사전일정과 안전점검 송부 및 작업허가서 발급을 지원합니다.</p>
                 </div>
                 <div className="w-full relative shrink-0 md:max-w-2xl md:mx-auto md:rounded-3xl md:overflow-hidden md:shadow-sm md:border md:border-slate-100 transition-all">
                   <div className="w-full aspect-[4/3] md:aspect-[21/9] relative overflow-hidden bg-white shadow-sm border-y border-slate-100 md:border-none">
@@ -1269,8 +1269,8 @@ https://ventilation-assessment.vercel.app/?action=approve&id=${permitId}&approve
               <div className="flex-1 flex flex-col bg-[#F8FAFC] animate-in slide-in-from-right-4 duration-500 ease-out overflow-y-auto custom-scrollbar relative">
                 <div className="bg-white px-6 py-6 md:py-8 border-b border-slate-100 shadow-sm shrink-0 relative flex items-center justify-center">
                   <div className="text-center w-full px-8 md:px-12">
-                    <h2 className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight">맨홀공간 작업(계획)허가서</h2>
-                    <p className="text-slate-500 text-[13px] md:text-sm mt-2 font-medium">최종 작업자 명단과 허가자 서명을 완료 후 발급하세요.</p>
+                    <h2 className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight">맨홀공간 작업허가서</h2>
+                    <p className="text-slate-500 text-[13px] md:text-sm mt-2 font-medium">맨홀 작업자(감시인), 측정자 명단과 최종허가자 서명을 완료 후 작업허가서를 발급하세요.</p>
                   </div>
                 </div>
                 
@@ -1524,7 +1524,7 @@ https://ventilation-assessment.vercel.app/?action=approve&id=${permitId}&approve
                           </tbody>
                         </table>
                       </div>
-                      
+
                       <div style={{ flex: '1' }}>
                         <h3 style={{ fontSize: '15px', fontWeight: 'bold', marginBottom: '6px', color: '#000' }}>6. 최종 허가자</h3>
                         <table style={{ width: '100%', borderCollapse: 'collapse', border: '1.5px solid black', fontSize: '13px', textAlign: 'center' }}>
@@ -1538,19 +1538,15 @@ https://ventilation-assessment.vercel.app/?action=approve&id=${permitId}&approve
                           </thead>
                           <tbody>
                             <tr>
-                              <td style={{ border: '1px solid black', padding: '13px 4px' }}>{approver.dept}</td>
-                              <td style={{ border: '1px solid black', padding: '13px 4px' }}>{approver.title}</td>
-                              <td style={{ border: '1px solid black', padding: '13px 4px' }}>{approver.name}</td>
-                              <td style={{ border: '1px solid black', padding: '2px 4px' }}>
-                                 {approver.signature ? (
-                                    <div style={{ textAlign: 'center' }}>
-                                      <img src={approver.signature} alt="서명" style={{ height: '35px', margin: '0 auto', display: 'block' }} />
-                                    </div>
-                                 ) : (
-                                    <div style={{ color: '#2563EB', fontWeight: 'bold', fontSize: '12px', padding: '11px 0' }}>
-                                      {approver.signed ? `${approver.name || '책임자'} (승인완료)` : (approver.name ? approver.name : '(서명)')}
-                                    </div>
-                                 )}
+                              <td style={{ border: '1px solid black', padding: '16px 4px' }}>{approver.dept}</td>
+                              <td style={{ border: '1px solid black', padding: '16px 4px' }}>{approver.title}</td>
+                              <td style={{ border: '1px solid black', padding: '16px 4px' }}>{approver.name}</td>
+                              <td style={{ border: '1px solid black', padding: '16px 4px' }}>
+                                {approver.signed ? (
+                                  <div style={{ color: '#2563EB', fontWeight: 'bold', fontSize: '12px' }}>{approver.name}</div>
+                                ) : (
+                                  <div style={{ color: '#94a3b8', fontSize: '12px' }}>(서명)</div>
+                                )}
                               </td>
                             </tr>
                           </tbody>
@@ -1562,6 +1558,24 @@ https://ventilation-assessment.vercel.app/?action=approve&id=${permitId}&approve
                   );
                 })()}
               </div>
+            )}
+
+            {/* 하단 네비게이션 바 (2~10단계) */}
+            {step > 1 && step <= 10 && (
+              <footer className="px-6 py-5 flex items-center bg-white/95 backdrop-blur-md sticky bottom-0 z-[60] border-t border-slate-200 justify-between mt-auto shadow-[0_-10px_20px_-10px_rgba(0,0,0,0.06)]">
+                <button onClick={prevStep} className="p-2 -ml-2 rounded-full hover:bg-slate-50 text-slate-600 transition-colors active:scale-95 shrink-0">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" /></svg>
+                </button>
+                <div className="flex-1 flex items-center px-4 md:px-10">
+                  <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
+                    <div className="bg-blue-600 h-full rounded-full transition-all duration-500 ease-out" style={{ width: `${((step - 1) / 9) * 100}%` }}></div>
+                  </div>
+                  <span className="ml-3 text-xs font-bold text-slate-400 whitespace-nowrap">{step - 1} / 9</span>
+                </div>
+                <button onClick={nextStep} disabled={step === 10} className={`p-2 -mr-2 rounded-full hover:bg-slate-50 text-slate-600 transition-colors active:scale-95 shrink-0 ${step === 10 ? 'opacity-0 cursor-default' : 'opacity-100'}`}>
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" /></svg>
+                </button>
+              </footer>
             )}
 
             {/* PWA 설치 배너 */}
