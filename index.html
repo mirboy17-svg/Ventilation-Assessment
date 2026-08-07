@@ -235,130 +235,56 @@
           ctx.lineCap = 'round';
           ctx.lineJoin = 'round';
           ctx.lineWidth = 4;
-          ctx.strokeStyle = '#0f172a';
+          ctx.strokeStyle = '#000000';
           ctxRef.current = ctx;
         }
       }, [isSigning]);
 
-      const getCoordinates = (e) => {
-        if (!canvasRef.current) return;
-        const canvas = canvasRef.current;
-        const rect = canvas.getBoundingClientRect();
-        if (e.touches && e.touches.length > 0) {
-          return { x: e.touches[0].clientX - rect.left, y: e.touches[0].clientY - rect.top };
-        }
-        return { x: e.clientX - rect.left, y: e.clientY - rect.top };
-      };
-
-      const startDrawing = (e) => {
-        e.preventDefault();
-        const coords = getCoordinates(e);
-        if (!coords || !ctxRef.current) return;
+      const startDrawing = ({ nativeEvent }) => {
+        const { offsetX, offsetY } = nativeEvent.touches ? nativeEvent.touches[0] : nativeEvent;
+        const rect = canvasRef.current.getBoundingClientRect();
+        const x = nativeEvent.touches ? nativeEvent.touches[0].clientX - rect.left : nativeEvent.offsetX;
+        const y = nativeEvent.touches ? nativeEvent.touches[0].clientY - rect.top : nativeEvent.offsetY;
+        
         ctxRef.current.beginPath();
-        ctxRef.current.moveTo(coords.x, coords.y);
+        ctxRef.current.moveTo(x, y);
         setIsDrawing(true);
       };
 
-      const draw = (e) => {
-        e.preventDefault();
-        if (!isDrawing || !ctxRef.current) return;
-        const coords = getCoordinates(e);
-        if (!coords) return;
-        ctxRef.current.lineTo(coords.x, coords.y);
-        ctxRef.current.stroke();
-      };
-
-      const finishDrawing = (e) => {
-        e.preventDefault();
-        if (e.type !== 'mouseout') e.preventDefault();
-        if (!ctxRef.current) return;
+      const finishDrawing = () => {
         ctxRef.current.closePath();
         setIsDrawing(false);
       };
 
+      const draw = (e) => {
+        if (!isDrawing) return;
+        e.preventDefault(); 
+        const nativeEvent = e.nativeEvent || e;
+        const rect = canvasRef.current.getBoundingClientRect();
+        const x = nativeEvent.touches ? nativeEvent.touches[0].clientX - rect.left : nativeEvent.offsetX;
+        const y = nativeEvent.touches ? nativeEvent.touches[0].clientY - rect.top : nativeEvent.offsetY;
+        
+        ctxRef.current.lineTo(x, y);
+        ctxRef.current.stroke();
+      };
+
       const clearSignature = () => {
-        if (!canvasRef.current || !ctxRef.current) return;
         const canvas = canvasRef.current;
         ctxRef.current.clearRect(0, 0, canvas.width, canvas.height);
-        setIsDrawing(false);
       };
 
       const saveSignature = () => {
-        if (!canvasRef.current) return;
-        const dataUrl = canvasRef.current.toDataURL('image/png');
+        const canvas = canvasRef.current;
+        const dataUrl = canvas.toDataURL('image/png');
         if (signIndex === -1) {
           setApprover(prev => ({ ...prev, signature: dataUrl, signed: true }));
         } else {
           handleWorkerChange(signIndex, 'signature', dataUrl);
-          handleWorkerChange(signIndex, 'confirmed', true);
         }
         closeSignModal();
       };
+      // -----------------------------
 
-      // --- 원격 서명 페이지 로직 ---
-      const [isSignPage, setIsSignPage] = useState(false);
-      const [signName, setSignName] = useState('');
-      const [remoteSigned, setRemoteSigned] = useState(false);
-
-      useEffect(() => {
-        const params = new URLSearchParams(window.location.search);
-        if (params.get('action') === 'sign') {
-          setIsSignPage(true);
-          setSignName(params.get('name') || '사용자');
-        }
-      }, []);
-
-      // (로컬 테스트용) 원격 서명이 완료되었는지 주기적으로 확인
-      useEffect(() => {
-        if (!isSignPage) {
-          const checkApproval = setInterval(() => {
-            if (localStorage.getItem('permit_approved') === 'true') {
-              setApprover(prev => ({ ...prev, signed: true }));
-              localStorage.removeItem('permit_approved'); 
-            }
-          }, 2000);
-          return () => clearInterval(checkApproval);
-        }
-      }, [isSignPage]);
-
-      // 원격 서명 페이지 렌더링
-      if (isSignPage) {
-        return (
-          <div className="min-h-screen bg-[#F8FAFC] flex flex-col justify-center items-center p-6 text-slate-800">
-            <div className="bg-white rounded-[2rem] shadow-xl w-full max-w-md p-8 text-center border border-slate-100">
-              <div className="w-20 h-20 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-6">
-                <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-              </div>
-              <h1 className="text-2xl font-black text-slate-900 mb-2">작업허가서 승인</h1>
-              
-              {!remoteSigned ? (
-                <>
-                  <p className="text-slate-600 mb-8 leading-relaxed font-medium text-lg">
-                    <strong className="text-blue-600 text-xl">{signName}</strong> 님,<br/>
-                    최종승인하시겠습니까?
-                  </p>
-                  <button onClick={() => {
-                    localStorage.setItem('permit_approved', 'true');
-                    setRemoteSigned(true);
-                  }} className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl shadow-lg active:scale-95 transition-all text-lg">
-                    확인
-                  </button>
-                </>
-              ) : (
-                <>
-                  <p className="text-slate-600 mb-8 leading-relaxed font-medium text-lg">
-                    최종승인되었습니다.
-                  </p>
-                  <div className="w-full bg-emerald-50 text-emerald-600 border border-emerald-200 font-bold py-4 rounded-xl text-lg flex items-center justify-center gap-2">
-                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7"></path></svg>
-                    승인 완료
-                  </div>
-                </>
-              )}
-            </div>
-          </div>
-        );
-      }
 
       const handleInputChange = (e) => {
         const { name, value } = e.target;
@@ -408,55 +334,30 @@
         setWorkers(workers.filter((_, i) => i !== index));
       };
 
+      const handleSendPermitSMS = () => {
+        if (!approver.phone) {
+          alert('최종 허가자의 전화번호를 입력해주세요.');
+          return;
+        }
+        
+        const message = `[맨홀작업 안전지킴이]  
+작업허가서 승인 요청입니다.
+- 작업장소 : ${formData.location || '-'}
+- 작업내용 : ${formData.workContent || '-'}
+- 작업수행시간 : ${formData.workDate || '-'}
+- 산소및유해가스측정결과 : O2 ${o2||'-'}%, H2S ${h2s||'-'}ppm, CO2 ${co2||'-'}ppm, CO ${co||'-'}ppm
+
+허가서 내용 확인 후 담당자 태블릿에서 직접 서명 및 승인을 진행해 주시기 바랍니다.`;
+
+        window.location.href = `sms:${approver.phone}?body=${encodeURIComponent(message)}`;
+      };
+
       const saveAsPDF = () => {
         if (!pdfTemplateRef.current) return;
         if (!window.html2canvas || !window.jspdf) {
           alert('PDF 기능을 불러오는 중입니다. 잠시 후 시도해주세요.'); return;
         }
         const { jsPDF } = window.jspdf;
-        pdfTemplateRef.current.style.display = 'block';
-
-        window.html2canvas(pdfTemplateRef.current, { scale: 2, backgroundColor: '#FFFFFF', useCORS: true })
-        .then(canvas => {
-          pdfTemplateRef.current.style.display = 'none';
-          const imgData = canvas.toDataURL('image/jpeg', 1.0);
-          const pdf = new jsPDF('p', 'mm', 'a4');
-          const pdfWidth = pdf.internal.pageSize.getWidth();
-          const imgHeight = (canvas.height * pdfWidth) / canvas.width;
-          pdf.addImage(imgData, 'JPEG', 0, 15, pdfWidth, imgHeight);
-          const date = new Date();
-          const dateStr = `${date.getFullYear().toString().slice(-2)}${(date.getMonth()+1).toString().padStart(2,'0')}${date.getDate().toString().padStart(2,'0')}`;
-          pdf.save(`맨홀작업일정_사전송부_${dateStr}.pdf`);
-        }).catch(err => {
-          pdfTemplateRef.current.style.display = 'none';
-          alert('PDF 저장 중 오류가 발생했습니다.');
-        });
-      };
-
-      const handleSendPermitSMS = () => {
-        if (!approver.phone) {
-          alert('최종 허가자의 전화번호를 입력해주세요.');
-          return;
-        }
-        if (!approver.name) {
-          alert('최종 허가자의 성명을 입력해주세요.');
-          return;
-        }
-
-        // 2. 문자 내용 구성
-        const message = `[맨홀작업 안전지킴이]
-작업허가서 승인 요청입니다.
-- 작업장소(위치) : ${formData.location || '-'}
-- 작업내용 : ${formData.workContent || '-'}
-- 작업수행시간 : ${formData.workDate || '-'}
-- 가스농도측정결과(4개항목결과) : 산소(${o2 || '-'}%), 황화수소(${h2s || '-'}ppm), 이산화탄소(${co2 || '-'}ppm), 일산화탄소(${co || '-'}ppm)
-
-아래의 링크 클릭 후 '확인'을 누르시면 최종 승인됩니다.
-https://ventilation-assessment.vercel.app/?action=sign&name=${encodeURIComponent(approver.name)}`;
-
-        window.location.href = `sms:${approver.phone}?body=${encodeURIComponent(message)}`;
-
-        // 3. 원격 서명 시뮬레이션
         pdfTemplateRef.current.style.display = 'block';
 
         window.html2canvas(pdfTemplateRef.current, { scale: 2, backgroundColor: '#FFFFFF', useCORS: true })
@@ -1545,7 +1446,9 @@ https://ventilation-assessment.vercel.app/?action=sign&name=${encodeURIComponent
                                       <img src={approver.signature} alt="서명" style={{ height: '35px', margin: '0 auto', display: 'block' }} />
                                     </div>
                                  ) : (
-                                    <div style={{ color: '#2563EB', fontWeight: 'bold', fontSize: '12px', padding: '11px 0' }}>{approver.name ? approver.name : '(서명)'}</div>
+                                    <div style={{ color: '#2563EB', fontWeight: 'bold', fontSize: '12px', padding: '11px 0' }}>
+                                      {approver.signed ? `${approver.name || '책임자'} (승인완료)` : (approver.name ? approver.name : '(서명)')}
+                                    </div>
                                  )}
                               </td>
                             </tr>
