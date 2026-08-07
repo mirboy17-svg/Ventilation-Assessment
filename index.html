@@ -51,7 +51,7 @@
   <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
   <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
   <!-- Babel -->
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script crossorigin src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
   <!-- html2canvas & jsPDF -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -78,28 +78,26 @@
       location: '', client: '', contact: '', workDate: '',
       workContent: '', otherInfo: '', remarks: '', inspector: ''
     };
-    const defaultWorkers = [{ type: '작업자', name: '', signature: '' }];
-    const defaultApprover = { dept: '', title: '', name: '', phone: '', signed: false, signature: '' };
+    const defaultWorkers = [{ type: '작업자', name: '', confirmed: false }];
+    const defaultApprover = { dept: '', title: '', name: '', phone: '', signed: false };
 
     // 가장 최근의 밤 10시 기준시간 타임스탬프 구하기
     const getMostRecent10PM = () => {
       const now = new Date();
       let tenPM = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 22, 0, 0, 0);
       if (now.getTime() < tenPM.getTime()) {
-        // 아직 오늘 밤 10시가 안 지났다면, 기준은 어제 밤 10시임
         tenPM.setDate(tenPM.getDate() - 1);
       }
       return tenPM.getTime();
     };
 
-    // 로컬 스토리지 데이터 초기 로드 로직 (만료되었으면 기본값 반환)
+    // 로컬 스토리지 데이터 초기 로드 로직
     const getInitialState = (key, defaultVal) => {
       try {
         const savedTime = localStorage.getItem('manholeAppLastSaved');
         if (savedTime) {
           const recent10PM = getMostRecent10PM();
           if (parseInt(savedTime, 10) < recent10PM) {
-            // 저장된 시간이 가장 최근 밤 10시보다 이전이라면 만료된 데이터이므로 기본값 반환
             return defaultVal;
           }
         }
@@ -118,9 +116,8 @@
     function App() {
       // URL 파라미터를 읽어 원격 서명 페이지인지 확인
       const urlParams = new URLSearchParams(window.location.search);
-      const isSignPage = urlParams.get('action') === 'approve';
-      const signId = urlParams.get('id');
-      const signName = urlParams.get('approverName') || '책임자';
+      const isSignPage = urlParams.get('action') === 'sign';
+      const signName = urlParams.get('name') || '책임자';
       const [remoteSigned, setRemoteSigned] = useState(false);
 
       const [step, setStep] = useState(1);
@@ -183,15 +180,13 @@
           if (savedTime) {
             const recent10PM = getMostRecent10PM();
             if (parseInt(savedTime, 10) < recent10PM) {
-              // 밤 10시가 지났으므로 강제 초기화
               performReset();
             }
           }
-        }, 60000); // 1분마다 체크
+        }, 60000);
         return () => clearInterval(checkResetInterval);
       }, []);
 
-      // --- 데이터 완전 초기화 함수 ---
       const performReset = () => {
         setFormData(defaultFormData);
         setFanCapacity(''); setShape(''); setWidth(''); setLength(''); setDiameter(''); setHeight('');
@@ -213,84 +208,6 @@
       const [showInstallBanner, setShowInstallBanner] = useState(false);
       const [showInstallInstructions, setShowInstallInstructions] = useState(false);
       const [deferredPrompt, setDeferredPrompt] = useState(null);
-
-      // --- 서명(그림판) 관련 로직 ---
-      const canvasRef = useRef(null);
-      const ctxRef = useRef(null);
-      const [isSigning, setIsSigning] = useState(false);
-      const [isDrawing, setIsDrawing] = useState(false);
-      const [signIndex, setSignIndex] = useState(-1); // -1: 최종허가자, 0 이상: 작업자
-
-      const openSignModal = (idx) => {
-        setSignIndex(idx);
-        setIsSigning(true);
-      };
-
-      const closeSignModal = () => {
-        setIsSigning(false);
-        setSignIndex(-1);
-      };
-
-      useEffect(() => {
-        if (isSigning && canvasRef.current) {
-          const canvas = canvasRef.current;
-          canvas.width = canvas.offsetWidth * 2;
-          canvas.height = canvas.offsetHeight * 2;
-          const ctx = canvas.getContext('2d');
-          ctx.scale(2, 2);
-          ctx.lineCap = 'round';
-          ctx.lineJoin = 'round';
-          ctx.lineWidth = 4;
-          ctx.strokeStyle = '#000000';
-          ctxRef.current = ctx;
-        }
-      }, [isSigning]);
-
-      const startDrawing = ({ nativeEvent }) => {
-        const { offsetX, offsetY } = nativeEvent.touches ? nativeEvent.touches[0] : nativeEvent;
-        const rect = canvasRef.current.getBoundingClientRect();
-        const x = nativeEvent.touches ? nativeEvent.touches[0].clientX - rect.left : nativeEvent.offsetX;
-        const y = nativeEvent.touches ? nativeEvent.touches[0].clientY - rect.top : nativeEvent.offsetY;
-        
-        ctxRef.current.beginPath();
-        ctxRef.current.moveTo(x, y);
-        setIsDrawing(true);
-      };
-
-      const finishDrawing = () => {
-        ctxRef.current.closePath();
-        setIsDrawing(false);
-      };
-
-      const draw = (e) => {
-        if (!isDrawing) return;
-        e.preventDefault(); 
-        const nativeEvent = e.nativeEvent || e;
-        const rect = canvasRef.current.getBoundingClientRect();
-        const x = nativeEvent.touches ? nativeEvent.touches[0].clientX - rect.left : nativeEvent.offsetX;
-        const y = nativeEvent.touches ? nativeEvent.touches[0].clientY - rect.top : nativeEvent.offsetY;
-        
-        ctxRef.current.lineTo(x, y);
-        ctxRef.current.stroke();
-      };
-
-      const clearSignature = () => {
-        const canvas = canvasRef.current;
-        ctxRef.current.clearRect(0, 0, canvas.width, canvas.height);
-      };
-
-      const saveSignature = () => {
-        const canvas = canvasRef.current;
-        const dataUrl = canvas.toDataURL('image/png');
-        if (signIndex === -1) {
-          setApprover(prev => ({ ...prev, signature: dataUrl, signed: true }));
-        } else {
-          handleWorkerChange(signIndex, 'signature', dataUrl);
-        }
-        closeSignModal();
-      };
-      // -----------------------------
-
 
       const handleInputChange = (e) => {
         const { name, value } = e.target;
@@ -329,7 +246,7 @@
       const isMinimumForced = Math.ceil(rawVentTime) < 30 && effectiveAirflowMin > 0;
 
       const handleAddWorker = () => {
-        setWorkers([...workers, { type: '작업자', name: '', signature: '' }]);
+        setWorkers([...workers, { type: '작업자', name: '', confirmed: false }]);
       };
       const handleWorkerChange = (index, field, value) => {
         const newWorkers = [...workers];
@@ -345,46 +262,17 @@
           alert('최종 허가자의 전화번호를 입력해주세요.');
           return;
         }
-        if (!approver.name) {
-          alert('최종 허가자의 성명을 입력해주세요.');
-          return;
-        }
-
-        const permitId = 'permit_' + Date.now();
-        const gasUrl = 'https://script.google.com/macros/s/AKfycbxrhyjXCLiIjf6ezIL7SXgWD1KSFdHYr41PpZFuLK21CnEPbeN5I6tnULgtihQvH7a85A/exec';
-
-        // 1. 구글 시트(DB)에 '대기중' 상태로 등록 요청 (CORS 우회 no-cors 적용)
-        fetch(`${gasUrl}?action=create&id=${permitId}&location=${encodeURIComponent(formData.location)}`, {
-          method: 'POST',
-          mode: 'no-cors'
-        }).catch(err => console.log('DB 등록 요청 완료'));
-
-        // 2. 문자 내용 구성
+        
         const message = `[맨홀작업 안전지킴이]  
 작업허가서 승인 요청입니다.
-- 작업장소(위치) : ${formData.location || '-'}
+- 작업장소 : ${formData.location || '-'}
 - 작업내용 : ${formData.workContent || '-'}
 - 작업수행시간 : ${formData.workDate || '-'}
-- 가스농도측정결과(4개항목결과) : 산소(${o2 || '-'}%), 황화수소(${h2s || '-'}ppm), 이산화탄소(${co2 || '-'}ppm), 일산화탄소(${co || '-'}ppm)
+- 산소및유해가스측정결과 : O2 ${o2||'-'}%, H2S ${h2s||'-'}ppm, CO2 ${co2||'-'}ppm, CO ${co||'-'}ppm
 
-아래 링크 클릭 후 '확인'을 누르시면 최종 승인됩니다.
-https://ventilation-assessment.vercel.app/?action=approve&id=${permitId}&approverName=${encodeURIComponent(approver.name)}`;
+허가서 내용 확인 후 담당자 태블릿에서 직접 승인을 진행해 주시기 바랍니다.`;
 
         window.location.href = `sms:${approver.phone}?body=${encodeURIComponent(message)}`;
-
-        // 3. 구글 시트 상태를 실시간 체크하여 승인이 떨어지면 화면에 반영하는 폴링(Polling) 로직 시작
-        const checkInterval = setInterval(() => {
-          fetch(`${gasUrl}?action=check&id=${permitId}`)
-            .then(res => res.json())
-            .then(data => {
-              if (data.success && data.status === '승인완료') {
-                setApprover(prev => ({ ...prev, signed: true, name: data.approver || prev.name }));
-                clearInterval(checkInterval);
-                alert('최종 허가자가 승인을 완료하였습니다!');
-              }
-            })
-            .catch(err => console.log('상태 확인 중...'));
-        }, 3000); // 3초마다 구글 시트 상태 확인
       };
 
       const saveAsPDF = () => {
@@ -428,13 +316,11 @@ https://ventilation-assessment.vercel.app/?action=approve&id=${permitId}&approve
           const pdfWidth = pdf.internal.pageSize.getWidth();
           const pdfHeight = pdf.internal.pageSize.getHeight();
           
-          // 이미지가 A4 높이를 초과하더라도 무조건 A4 1장에 맞게 비율 축소
           let imgHeight = (canvas.height * pdfWidth) / canvas.width;
           if (imgHeight > pdfHeight) {
              imgHeight = pdfHeight;
           }
 
-          // 상단 여백 제거 (0, 0 배치)
           pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, imgHeight);
           const date = new Date();
           const dateStr = `${date.getFullYear().toString().slice(-2)}${(date.getMonth()+1).toString().padStart(2,'0')}${date.getDate().toString().padStart(2,'0')}`;
@@ -514,63 +400,6 @@ https://ventilation-assessment.vercel.app/?action=approve&id=${permitId}&approve
       const nextStep = () => setStep((s) => s + 1);
       const prevStep = () => setStep((s) => s - 1);
 
-      // 원격 서명 페이지 렌더링
-      if (isSignPage) {
-        return (
-          <div className="min-h-screen bg-[#F8FAFC] flex flex-col justify-center items-center p-6 text-slate-800">
-            <div className="bg-white rounded-[2rem] shadow-xl w-full max-w-md p-8 text-center border border-slate-100">
-              <div className="w-20 h-20 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-6">
-                <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-              </div>
-              <h1 className="text-2xl font-black text-slate-900 mb-2">맨홀작업 안전지킴이</h1>
-              <p className="text-slate-500 mb-8 leading-relaxed">
-                최종 승인을 진행하시겠습니까?<br/>
-                <strong className="text-blue-600 text-lg">({signName} 님)</strong>
-              </p>
-              
-              {!remoteSigned ? (
-                <button 
-                  id="confirmBtn"
-                  onClick={(e) => {
-                    const btn = e.currentTarget;
-                    btn.innerText = '처리 중...';
-                    btn.disabled = true;
-                    
-                    const gasUrl = 'https://script.google.com/macros/s/AKfycbxrhyjXCLiIjf6ezIL7SXgWD1KSFdHYr41PpZFuLK21CnEPbeN5I6tnULgtihQvH7a85A/exec';
-                    fetch(`${gasUrl}?action=approve&id=${signId}&approverName=${encodeURIComponent(signName)}`)
-                      .then(res => res.json())
-                      .then(data => {
-                        if (data.success) {
-                          setRemoteSigned(true);
-                        } else {
-                          alert(data.message || '이미 처리되었거나 오류가 발생했습니다.');
-                          btn.innerText = '승인 불가';
-                        }
-                      })
-                      .catch(err => {
-                        alert('네트워크 오류가 발생했습니다.');
-                        btn.disabled = false;
-                        btn.innerText = '확인 (최종 승인)';
-                      });
-                  }} 
-                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl shadow-lg active:scale-95 transition-all text-lg"
-                >
-                  확인 (최종 승인)
-                </button>
-              ) : (
-                <div className="flex flex-col items-center gap-3">
-                  <div className="w-full bg-emerald-50 text-emerald-600 border border-emerald-200 font-bold py-4 rounded-xl text-lg flex items-center justify-center gap-2">
-                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7"></path></svg>
-                    최종 승인되었습니다.
-                  </div>
-                  <p className="text-sm text-emerald-700 font-medium mt-2">창을 닫으셔도 됩니다.</p>
-                </div>
-              )}
-            </div>
-          </div>
-        );
-      }
-
       return (
         <div className="min-h-screen bg-[#F4F7FB] flex justify-center font-sans text-slate-800 selection:bg-blue-200 sm:p-4 md:p-8">
           <div className="w-full max-w-md md:max-w-3xl lg:max-w-5xl bg-white sm:rounded-[2.5rem] sm:shadow-[0_20px_60px_-15px_rgba(0,0,0,0.08)] min-h-[100dvh] sm:min-h-[850px] flex flex-col relative overflow-hidden sm:border border-slate-100/50 transition-all duration-500">
@@ -587,29 +416,6 @@ https://ventilation-assessment.vercel.app/?action=approve&id=${permitId}&approve
                   <div className="flex gap-3">
                     <button onClick={() => setShowResetModal(false)} className="flex-1 py-3.5 rounded-xl font-bold bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors">취소</button>
                     <button onClick={() => { performReset(); setShowResetModal(false); }} className="flex-1 py-3.5 rounded-xl font-bold bg-rose-600 text-white shadow-md shadow-rose-500/20 hover:bg-rose-700 transition-colors">예</button>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* 수기 서명(그림판) 모달 */}
-            {isSigning && (
-              <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4 animate-in fade-in duration-300">
-                <div className="bg-white rounded-[2rem] p-6 w-full max-w-md shadow-2xl relative flex flex-col items-center">
-                  <h3 className="text-xl font-extrabold text-slate-800 mb-4">{signIndex === -1 ? '최종 허가자 서명' : '작업자 서명'}</h3>
-                  <div className="w-full h-56 bg-slate-50 border-2 border-dashed border-slate-300 rounded-2xl relative overflow-hidden mb-4 touch-none">
-                    <canvas 
-                      ref={canvasRef} 
-                      className="absolute inset-0 w-full h-full cursor-crosshair touch-none"
-                      onMouseDown={startDrawing} onMouseMove={draw} onMouseUp={finishDrawing} onMouseLeave={finishDrawing}
-                      onTouchStart={startDrawing} onTouchMove={draw} onTouchEnd={finishDrawing}
-                    />
-                    {!isDrawing && <div className="absolute inset-0 pointer-events-none flex items-center justify-center opacity-20"><span className="text-3xl font-black text-slate-400">서명란</span></div>}
-                  </div>
-                  <div className="flex gap-3 w-full">
-                    <button onClick={clearSignature} className="flex-1 py-3.5 rounded-xl font-bold bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors">다시 쓰기</button>
-                    <button onClick={closeSignModal} className="flex-1 py-3.5 rounded-xl font-bold bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors">취소</button>
-                    <button onClick={saveSignature} className="flex-1 py-3.5 rounded-xl font-bold bg-blue-600 text-white shadow-md hover:bg-blue-700 transition-colors">서명 완료</button>
                   </div>
                 </div>
               </div>
@@ -885,7 +691,7 @@ https://ventilation-assessment.vercel.app/?action=approve&id=${permitId}&approve
                   <a href="https://www.youtube.com/watch?v=pjrIZcxkjTA" target="_blank" rel="noopener noreferrer" className="flex-1 transition-transform hover:scale-105 active:scale-95">
                     <div className="bg-white p-2 rounded-xl border border-slate-200 shadow-sm text-center h-full flex flex-col justify-between">
                       <div className="flex-1 flex flex-col items-center justify-center border border-slate-100 rounded-lg mb-1 bg-slate-50 overflow-hidden relative">
-                         <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://youtu.be/pjrIZcxkjTA" alt="맨홀질식예방 QR" className="w-full p-2 object-contain mix-blend-multiply" />
+                         <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://www.youtube.com/watch?v=pjrIZcxkjTA" alt="맨홀질식예방 QR" className="w-full p-2 object-contain mix-blend-multiply" />
                          <div className="absolute bottom-0 inset-x-0 bg-slate-800/80 backdrop-blur-sm text-white text-[10px] md:text-xs font-bold py-1.5">맨홀질식예방</div>
                       </div>
                       <span className="text-[11px] md:text-xs font-bold text-slate-600 shrink-0">👆 영상 이동</span>
@@ -1278,6 +1084,7 @@ https://ventilation-assessment.vercel.app/?action=approve&id=${permitId}&approve
                      </div>
                   </div>
 
+                  {/* 5. 작업자(측정자) 명단 */}
                   <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
                      <div className="flex justify-between items-center mb-4 border-b border-slate-100 pb-2">
                        <h3 className="text-base font-bold text-slate-800">5. 작업자(측정자) 명단</h3>
@@ -1319,13 +1126,14 @@ https://ventilation-assessment.vercel.app/?action=approve&id=${permitId}&approve
                      </div>
                   </div>
 
+                  {/* 6. 최종 허가자 승인 (서명확인 방식 적용) */}
                   <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
-                     <h3 className="text-base font-bold text-slate-800 mb-4 border-b border-slate-100 pb-2">6. 최종 허가자 승인 (직접 서명 또는 알림 발송)</h3>
+                     <h3 className="text-base font-bold text-slate-800 mb-4 border-b border-slate-100 pb-2">6. 최종 허가자 승인</h3>
                      <div className="grid grid-cols-2 gap-3 mb-4 md:grid-cols-4">
-                        <input type="text" placeholder="부서" value={approver.dept} onChange={e => setApprover({...approver, dept: e.target.value})} className="p-3 rounded-xl border border-slate-200 bg-slate-50 text-sm md:text-base outline-none focus:border-blue-500 focus:bg-white" />
-                        <input type="text" placeholder="직책" value={approver.title} onChange={e => setApprover({...approver, title: e.target.value})} className="p-3 rounded-xl border border-slate-200 bg-slate-50 text-sm md:text-base outline-none focus:border-blue-500 focus:bg-white" />
-                        <input type="text" placeholder="성명" value={approver.name} onChange={e => setApprover({...approver, name: e.target.value})} className="p-3 rounded-xl border border-slate-200 bg-slate-50 text-sm md:text-base outline-none focus:border-blue-500 focus:bg-white" />
-                        <input type="tel" placeholder="전화번호" value={approver.phone} onChange={e => setApprover({...approver, phone: e.target.value})} className="p-3 rounded-xl border border-slate-200 bg-slate-50 text-sm md:text-base outline-none focus:border-blue-500 focus:bg-white" />
+                        <input type="text" placeholder="부서" value={approver.dept} readOnly={approver.signed} onChange={e => setApprover({...approver, dept: e.target.value})} className="p-3 rounded-xl border border-slate-200 bg-slate-50 text-sm md:text-base outline-none focus:border-blue-500 focus:bg-white disabled:bg-slate-100 disabled:text-slate-500" />
+                        <input type="text" placeholder="직책" value={approver.title} readOnly={approver.signed} onChange={e => setApprover({...approver, title: e.target.value})} className="p-3 rounded-xl border border-slate-200 bg-slate-50 text-sm md:text-base outline-none focus:border-blue-500 focus:bg-white disabled:bg-slate-100 disabled:text-slate-500" />
+                        <input type="text" placeholder="성명" value={approver.name} readOnly={approver.signed} onChange={e => setApprover({...approver, name: e.target.value})} className="p-3 rounded-xl border border-slate-200 bg-slate-50 text-sm md:text-base outline-none focus:border-blue-500 focus:bg-white disabled:bg-slate-100 disabled:text-slate-500" />
+                        <input type="tel" placeholder="전화번호" value={approver.phone} readOnly={approver.signed} onChange={e => setApprover({...approver, phone: e.target.value})} className="p-3 rounded-xl border border-slate-200 bg-slate-50 text-sm md:text-base outline-none focus:border-blue-500 focus:bg-white disabled:bg-slate-100 disabled:text-slate-500" />
                      </div>
                      
                      <div className="flex flex-col md:flex-row gap-3 items-stretch">
@@ -1333,17 +1141,20 @@ https://ventilation-assessment.vercel.app/?action=approve&id=${permitId}&approve
                           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
                           승인 요청 알림문자 발송
                         </button>
-                        <div className="flex-1 flex items-center justify-center py-2 md:py-4 rounded-xl border-2 border-dashed bg-slate-50 border-slate-300">
-                           {approver.signature ? (
-                              <div className="relative w-full flex justify-center">
-                                 <img src={approver.signature} alt="허가자 서명" className="h-12 object-contain" />
-                                 <button onClick={() => setApprover({...approver, signature: ''})} className="absolute -top-2 right-4 bg-slate-400 text-white rounded-full p-1"><svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" /></svg></button>
+                        
+                        <div className="flex-1 flex items-center">
+                          {approver.signed ? (
+                            <div className="flex gap-2 w-full">
+                              <button onClick={() => setApprover(prev => ({ ...prev, signed: false }))} className="py-3 px-4 rounded-xl font-bold text-sm bg-slate-200 text-slate-600 hover:bg-slate-300 transition-colors shrink-0">수정</button>
+                              <div className="flex-1 py-3 px-4 rounded-xl font-bold text-sm bg-blue-50 text-blue-600 border border-blue-100 flex items-center justify-center gap-2">
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7"></path></svg> 서명완료
                               </div>
-                           ) : (
-                              <button onClick={() => openSignModal(-1)} className="w-full h-full text-blue-600 font-bold flex items-center justify-center gap-2 hover:bg-blue-50 rounded-lg transition-colors">
-                                 <span className="text-xl leading-none">✍️</span> 태블릿 직접 서명
-                              </button>
-                           )}
+                            </div>
+                          ) : (
+                            <button onClick={() => { if(!approver.name.trim()){ alert('최종 허가자 성명을 먼저 입력해주세요.'); return; } setApprover(prev => ({ ...prev, signed: true })); }} className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 md:py-4 rounded-xl shadow-md transition-all text-sm md:text-base flex items-center justify-center gap-2">
+                              서명확인
+                            </button>
+                          )}
                         </div>
                      </div>
                   </div>
@@ -1357,7 +1168,7 @@ https://ventilation-assessment.vercel.app/?action=approve&id=${permitId}&approve
                   <button onClick={handleGoHome} className="w-full bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-800 font-bold py-4 rounded-2xl active:scale-[0.98] transition-all duration-300 text-base">처음으로 돌아가기</button>
                 </div>
 
-                {/* 10단계 작업허가서 전용 PDF 템플릿 (숨김처리) */}
+                {/* 10단계 작업허가서 전용 PDF 템플릿 (성명만 파란색으로 출력) */}
                 {(() => {
                   const measurerName = workers.find(w => w.type === '측정자' && w.name.trim() !== '')?.name || formData.inspector || formData.sender || '-';
                   
@@ -1483,6 +1294,7 @@ https://ventilation-assessment.vercel.app/?action=approve&id=${permitId}&approve
                     </div>
 
                     <div style={{ display: 'flex', gap: '20px' }}>
+                      {/* 5. 작업자 명단 (성명만 파란색 출력) */}
                       <div style={{ flex: '1' }}>
                         <h3 style={{ fontSize: '15px', fontWeight: 'bold', marginBottom: '6px', color: '#000' }}>5. 작업자 명단</h3>
                         <table style={{ width: '100%', borderCollapse: 'collapse', border: '1.5px solid black', fontSize: '13px', textAlign: 'center' }}>
@@ -1500,7 +1312,7 @@ https://ventilation-assessment.vercel.app/?action=approve&id=${permitId}&approve
                                 <td style={{ border: '1px solid black', padding: '6px' }}>{w.name}</td>
                                 <td style={{ border: '1px solid black', padding: '6px' }}>
                                    {w.confirmed && w.name ? (
-                                      <div style={{ color: '#2563EB', fontWeight: 'bold', fontSize: '12px' }}>{w.name} (서명)</div>
+                                      <div style={{ color: '#2563EB', fontWeight: 'bold', fontSize: '13px' }}>{w.name}</div>
                                    ) : (
                                       <div style={{ color: '#94a3b8', fontSize: '12px' }}>{w.name ? '(미확인)' : '(서명)'}</div>
                                    )}
@@ -1516,6 +1328,7 @@ https://ventilation-assessment.vercel.app/?action=approve&id=${permitId}&approve
                         </table>
                       </div>
                       
+                      {/* 6. 최종 허가자 승인 (성명만 파란색 출력) */}
                       <div style={{ flex: '1' }}>
                         <h3 style={{ fontSize: '15px', fontWeight: 'bold', marginBottom: '6px', color: '#000' }}>6. 최종 허가자</h3>
                         <table style={{ width: '100%', borderCollapse: 'collapse', border: '1.5px solid black', fontSize: '13px', textAlign: 'center' }}>
@@ -1533,15 +1346,9 @@ https://ventilation-assessment.vercel.app/?action=approve&id=${permitId}&approve
                               <td style={{ border: '1px solid black', padding: '13px 4px' }}>{approver.title}</td>
                               <td style={{ border: '1px solid black', padding: '13px 4px' }}>{approver.name}</td>
                               <td style={{ border: '1px solid black', padding: '2px 4px' }}>
-                                 {approver.signature ? (
-                                    <div style={{ textAlign: 'center' }}>
-                                      <img src={approver.signature} alt="서명" style={{ height: '35px', margin: '0 auto', display: 'block' }} />
-                                    </div>
-                                 ) : (
-                                    <div style={{ color: '#2563EB', fontWeight: 'bold', fontSize: '12px', padding: '11px 0' }}>
-                                      {approver.signed ? `${approver.name || '책임자'} (승인완료)` : (approver.name ? approver.name : '(서명)')}
-                                    </div>
-                                 )}
+                                 <div style={{ color: '#2563EB', fontWeight: 'bold', fontSize: '13px', padding: '11px 0' }}>
+                                   {approver.signed ? (approver.name || '책임자') : '(서명)'}
+                                 </div>
                               </td>
                             </tr>
                           </tbody>
