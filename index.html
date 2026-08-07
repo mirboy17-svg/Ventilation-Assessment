@@ -351,7 +351,7 @@
         }
 
         const permitId = 'permit_' + Date.now();
-        const gasUrl = 'https://script.google.com/macros/s/AKfycbzol98mGAggX5MAIllHg1KgRAzdrvSTN1cqYrle_PTGFdFZQUyrG4Jd8sJDVcKZAEHJhg/exec';
+        const gasUrl = 'https://script.google.com/macros/s/AKfycbzbxGbyo0xUGKIFFf-KAIDcFEdrPDltcGXhD5sdvx-zqSzwPb1hx7aXLgjSGTei11VFmQ/exec';
 
         // 1. 구글 시트(DB)에 '대기중' 상태로 등록 요청 (CORS 우회 no-cors 적용)
         fetch(`${gasUrl}?action=create&id=${permitId}&location=${encodeURIComponent(formData.location)}`, {
@@ -536,7 +536,7 @@ https://ventilation-assessment.vercel.app/?action=approve&id=${permitId}&approve
                     btn.innerText = '처리 중...';
                     btn.disabled = true;
                     
-                    const gasUrl = 'https://script.google.com/macros/s/AKfycbzol98mGAggX5MAIllHg1KgRAzdrvSTN1cqYrle_PTGFdFZQUyrG4Jd8sJDVcKZAEHJhg/exec';
+                    const gasUrl = 'https://script.google.com/macros/s/AKfycbzbxGbyo0xUGKIFFf-KAIDcFEdrPDltcGXhD5sdvx-zqSzwPb1hx7aXLgjSGTei11VFmQ/exec';
                     fetch(`${gasUrl}?action=approve&id=${signId}&approverName=${encodeURIComponent(signName)}`)
                       .then(res => res.json())
                       .then(data => {
