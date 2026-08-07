@@ -1369,7 +1369,7 @@ https://ventilation-assessment.vercel.app/?action=approve&id=${permitId}&approve
                                서명완료
                              </button>
                           ) : (
-                             <button onClick={() => { if(!approver.name.trim()){ alert('성명을 먼저 입력해주세요.'); return; } setApprover({...approver, signed: true}); }} className="w-full bg-slate-800 hover:bg-slate-700 text-white font-bold py-3.5 px-5 rounded-xl transition-colors flex items-center justify-center gap-1.5 text-sm md:text-base">서명확인(문자발송 후 클릭)</button>
+                             <button onClick={() => { if(!approver.name.trim()){ alert('성명을 먼저 입력해주세요.'); return; } setApprover({...approver, signed: true}); }} className="w-full bg-slate-800 hover:bg-slate-700 text-white font-bold py-3.5 px-5 rounded-xl transition-colors flex items-center justify-center gap-1.5 text-sm md:text-base">서명확인(클릭)</button>
                           )}
                        </div>
                      </div>
