@@ -72,6 +72,9 @@
   <script type="text/babel">
     const { useState, useEffect, useRef } = React;
 
+    // --- 구글 앱스 스크립트 API URL (이곳에서 한 번에 관리하세요) ---
+    const GAS_URL = 'https://script.google.com/macros/s/AKfycbzi_NXsFuAXhE2LdQcvrwu8xf_VQPkMjUlL4dklAKZU38m_vnZ6TGN7QvzQNu0Tr_LKgg/exec';
+
     // --- 기본값 및 초기화 로직 셋팅 ---
     const defaultFormData = {
       receiver: '', sender: '', companyName: '', representative: '',
@@ -335,6 +338,30 @@
       const ventTime = Math.max(Math.ceil(rawVentTime), 30); 
       const isMinimumForced = Math.ceil(rawVentTime) < 30 && effectiveAirflowMin > 0;
 
+      // --- 폴링(Polling) 자동 시작 로직 ---
+      useEffect(() => {
+        if (step === 10 && approver.permitId && !approver.signed) {
+          if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+          pollIntervalRef.current = setInterval(() => {
+            fetch(`${GAS_URL}?action=check&id=${approver.permitId}&t=${Date.now()}`)
+              .then(res => res.json())
+              .then(data => {
+                if (data.success && data.status === '승인완료') {
+                  setApprover(prev => ({ ...prev, signed: true, name: data.approver || prev.name }));
+                  clearInterval(pollIntervalRef.current);
+                  alert('최종 허가자가 승인을 완료하였습니다!');
+                }
+              })
+              .catch(err => console.log('상태 확인 중...'));
+          }, 3000);
+        }
+        return () => {
+          if (pollIntervalRef.current) {
+            clearInterval(pollIntervalRef.current);
+          }
+        };
+      }, [step, approver.permitId, approver.signed]);
+
       const handleAddWorker = () => {
         setWorkers([...workers, { type: '작업자', name: '', signature: '' }]);
       };
@@ -358,10 +385,10 @@
         }
 
         const permitId = 'permit_' + Date.now();
-        const gasUrl = 'https://script.google.com/macros/s/AKfycbxrkiaO7vqp8bE8JhOVYzUv-B_tomwqBmhxasXPk09WJ0cuWhIuC5Ddl0ybJqyXl76ysw/exec';
+        setApprover(prev => ({ ...prev, permitId: permitId, signed: false }));
 
         // 1. 구글 시트(DB)에 '대기중' 상태로 등록 요청 (CORS 우회 no-cors 적용)
-        fetch(`${gasUrl}?action=create&id=${permitId}&location=${encodeURIComponent(formData.location)}`, {
+        fetch(`${GAS_URL}?action=create&id=${permitId}&location=${encodeURIComponent(formData.location)}`, {
           method: 'POST',
           mode: 'no-cors'
         }).catch(err => console.log('DB 등록 요청 완료'));
@@ -377,24 +404,12 @@
 아래 링크 클릭 후 '확인'을 누르시면 최종 승인됩니다.
 https://ventilation-assessment.vercel.app/?action=approve&id=${permitId}&approverName=${encodeURIComponent(approver.name)}`;
 
-        window.location.href = `sms:${approver.phone}?body=${encodeURIComponent(message)}`;
-
-        // 3. 구글 시트 상태를 실시간 체크하여 승인이 떨어지면 화면에 반영하는 폴링(Polling) 로직 시작
-        if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
-        
-        pollIntervalRef.current = setInterval(() => {
-          // 브라우저 캐시 방지를 위해 &t=${Date.now()} 추가 (매번 새로운 요청으로 인식하게 함)
-          fetch(`${gasUrl}?action=check&id=${permitId}&t=${Date.now()}`)
-            .then(res => res.json())
-            .then(data => {
-              if (data.success && data.status === '승인완료') {
-                setApprover(prev => ({ ...prev, signed: true, name: data.approver || prev.name }));
-                clearInterval(pollIntervalRef.current);
-                alert('최종 허가자가 승인을 완료하였습니다!');
-              }
-            })
-            .catch(err => console.log('상태 확인 중...'));
-        }, 3000); // 3초마다 구글 시트 상태 확인
+        // 안드로이드/아이폰 탭 전환 시 오류 방지를 위해 동적 a 태그 사용
+        const smsLink = document.createElement('a');
+        smsLink.href = `sms:${approver.phone}?body=${encodeURIComponent(message)}`;
+        document.body.appendChild(smsLink);
+        smsLink.click();
+        document.body.removeChild(smsLink);
       };
 
       const saveAsPDF = () => {
@@ -546,18 +561,20 @@ https://ventilation-assessment.vercel.app/?action=approve&id=${permitId}&approve
                     btn.innerText = '처리 중...';
                     btn.disabled = true;
                     
-                    const gasUrl = 'https://script.google.com/macros/s/AKfycbxrkiaO7vqp8bE8JhOVYzUv-B_tomwqBmhxasXPk09WJ0cuWhIuC5Ddl0ybJqyXl76ysw/exec';
-                    fetch(`${gasUrl}?action=approve&id=${signId}&approverName=${encodeURIComponent(signName)}`)
-                      .then(res => res.json())
-                      .then(data => {
-                        // 조건 없이 무조건 승인 완료 성공 화면으로 넘기도록 처리
-                        setRemoteSigned(true);
-                      })
-                      .catch(err => {
-                        alert('네트워크 오류가 발생했습니다.');
-                        btn.disabled = false;
-                        btn.innerText = '확인 (최종 승인)';
-                      });
+                    // POST + no-cors 방식으로 무조건 전송 (CORS 차단 우회)
+                    // no-cors 설정 시 응답 내용(json)을 읽을 수 없으므로 무조건 승인 화면으로 전환
+                    fetch(`${GAS_URL}?action=approve&id=${signId}&approverName=${encodeURIComponent(signName)}`, {
+                      method: 'POST',
+                      mode: 'no-cors'
+                    })
+                    .then(() => {
+                      setRemoteSigned(true);
+                    })
+                    .catch(err => {
+                      alert('네트워크 오류가 발생했습니다.');
+                      btn.disabled = false;
+                      btn.innerText = '확인 (최종 승인)';
+                    });
                   }} 
                   className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl shadow-lg active:scale-95 transition-all text-lg"
                 >
